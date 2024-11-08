@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "589cc0f65c3aaa7d4e9024d545bc1974",
+    "content-hash": "77ea38479f0bb9a7bfee985e8c7a286c",
     "packages": [
         {
             "name": "brick/math",
@@ -1321,6 +1321,70 @@
                 "source": "https://github.com/laravel/prompts/tree/v0.3.1"
             },
             "time": "2024-10-09T19:42:26+00:00"
+        },
+        {
+            "name": "laravel/sanctum",
+            "version": "v4.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/sanctum.git",
+                "reference": "54aea9d13743ae8a6cdd3c28dbef128a17adecab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/sanctum/zipball/54aea9d13743ae8a6cdd3c28dbef128a17adecab",
+                "reference": "54aea9d13743ae8a6cdd3c28dbef128a17adecab",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/console": "^11.0",
+                "illuminate/contracts": "^11.0",
+                "illuminate/database": "^11.0",
+                "illuminate/support": "^11.0",
+                "php": "^8.2",
+                "symfony/console": "^7.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^9.0",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^10.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laravel\\Sanctum\\SanctumServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Sanctum\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Laravel Sanctum provides a featherweight authentication system for SPAs and simple APIs.",
+            "keywords": [
+                "auth",
+                "laravel",
+                "sanctum"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/sanctum/issues",
+                "source": "https://github.com/laravel/sanctum"
+            },
+            "time": "2024-09-27T14:55:41+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -3115,6 +3179,155 @@
                 }
             ],
             "time": "2024-04-27T21:32:50+00:00"
+        },
+        {
+            "name": "saloonphp/laravel-plugin",
+            "version": "v3.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/saloonphp/laravel-plugin.git",
+                "reference": "15be0d587e61f11076f93d6df30561b88ff837c1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/saloonphp/laravel-plugin/zipball/15be0d587e61f11076f93d6df30561b88ff837c1",
+                "reference": "15be0d587e61f11076f93d6df30561b88ff837c1",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^10.0 || ^11.0",
+                "illuminate/support": "^10.0 || ^11.0",
+                "php": "^8.1",
+                "saloonphp/saloon": "^3.5",
+                "symfony/finder": "^6.4 || ^7.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.48",
+                "orchestra/testbench": "^8.21 || ^9.0",
+                "pestphp/pest": "^2.32",
+                "phpstan/phpstan": "^1.10.56"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Saloon": "Saloon\\Laravel\\Facades\\Saloon"
+                    },
+                    "providers": [
+                        "Saloon\\Laravel\\SaloonServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Saloon\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sam Carré",
+                    "email": "29132017+Sammyjo20@users.noreply.github.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "The official Laravel plugin for Saloon",
+            "homepage": "https://github.com/saloonphp/laravel-plugin",
+            "keywords": [
+                "api",
+                "api-integrations",
+                "saloon",
+                "saloonphp",
+                "sdk"
+            ],
+            "support": {
+                "source": "https://github.com/saloonphp/laravel-plugin/tree/v3.5.0"
+            },
+            "time": "2024-03-13T18:48:03+00:00"
+        },
+        {
+            "name": "saloonphp/saloon",
+            "version": "v3.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/saloonphp/saloon.git",
+                "reference": "69c2cbc7636b0a36024479c880a48aad40b781d3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/saloonphp/saloon/zipball/69c2cbc7636b0a36024479c880a48aad40b781d3",
+                "reference": "69c2cbc7636b0a36024479c880a48aad40b781d3",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.6",
+                "guzzlehttp/promises": "^1.5 || ^2.0",
+                "guzzlehttp/psr7": "^2.0",
+                "php": "^8.1",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.1 || ^2.0"
+            },
+            "conflict": {
+                "sammyjo20/saloon": "*"
+            },
+            "require-dev": {
+                "ext-simplexml": "*",
+                "friendsofphp/php-cs-fixer": "^3.5",
+                "illuminate/collections": "^9.39 || ^10.0",
+                "league/flysystem": "^3.0",
+                "pestphp/pest": "^2.10",
+                "phpstan/phpstan": "^1.11.4",
+                "saloonphp/xml-wrangler": "^1.1",
+                "spatie/ray": "^1.33",
+                "symfony/dom-crawler": "^6.0 || ^7.0",
+                "symfony/var-dumper": "^6.3 || ^7.0"
+            },
+            "suggest": {
+                "illuminate/collections": "Required for the response collect() method.",
+                "saloonphp/xml-wrangler": "Required for the response xmlReader() method.",
+                "symfony/dom-crawler": "Required for the response dom() method.",
+                "symfony/var-dumper": "Required for default debugging drivers."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Saloon\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sam Carré",
+                    "email": "29132017+Sammyjo20@users.noreply.github.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Build beautiful API integrations and SDKs with Saloon",
+            "homepage": "https://github.com/saloonphp/saloon",
+            "keywords": [
+                "api",
+                "api-integrations",
+                "saloon",
+                "sammyjo20",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/saloonphp/saloon/issues",
+                "source": "https://github.com/saloonphp/saloon/tree/v3.10.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/sammyjo20",
+                    "type": "github"
+                }
+            ],
+            "time": "2024-08-03T14:11:59+00:00"
         },
         {
             "name": "symfony/clock",
@@ -7832,12 +8045,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }
