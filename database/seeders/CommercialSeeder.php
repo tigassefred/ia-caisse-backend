@@ -14,11 +14,13 @@ class CommercialSeeder extends Seeder
      */
     public function run(): void
     {
-       foreach (range(1, 10) as $index) {
-            Commercial::create([
-                'name' => fake()->name(),
-                "id"=>Str::uuid(),
-            ]);
-        }
+
+        Commercial::factory()->count(10)->create();
+        Commercial::create([
+            'name' => "SALIFOU ILBOUD",
+            "id"=>Str::uuid(),
+        ]);
+
+ 
     }
 }
