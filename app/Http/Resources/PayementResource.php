@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Commercial;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,13 +16,18 @@ class PayementResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-
+       $Invoice = Invoice::find($this->invoice_id);
         return [
             'id'=>$this->id,
-            'amount'=>$this->amunt,
+            'amount'=>$this->amount,
             'reliquat'=>$this->reliquat,
-            'invoice'=>$this->invoice,
-            'commercial'=>Commercial::query()->find($this->invoixe->commercial_id),
+            "user"=>$this->user,
+            'invoice'=>$Invoice,
+            'items'=>$Invoice->Items,
+            'cbm'=>$Invoice->Items->sum('cbm'),
+            "commercial"=>$Invoice->Commercial,
+            'cash_in'=>$this->cash_in,
+//            'commercial'=>Commercial::query()->find($this->invoixe->commercial_id),
         ];
     }
 }

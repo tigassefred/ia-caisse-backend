@@ -34,8 +34,10 @@ class Payment extends Model
         return $this->belongsTo('App\Models\Invoice');
     }
 
+
     protected  $casts = [
-       "amount" => "float",
-        "reliquat" => "float",
+       'amount' => "float",
+        'reliquat' => "float",
+        "cash_in"=>'boolean'
     ];
 }

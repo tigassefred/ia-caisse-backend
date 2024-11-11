@@ -42,7 +42,7 @@ class Invoice extends Model
 
     public function  Commercial(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-       return $this->hasOne('App\Models\Commercial','commercial_id','id');
+       return $this->hasOne('App\Models\Commercial','id','commercial_id');
     }
 
     protected $appends = ['montant_net'];

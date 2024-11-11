@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Integrations\PackingList\Requests\GetPackingListItem;
+use App\Http\Integrations\Stock\StockConnector;
 use App\Http\Requests\Invoice\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\PayementResource;
+use App\Models\CashTransactionItem;
+use App\Models\Commercial;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Payment;
+use App\Models\Price;
 use App\Models\User;
 use App\Services\InvoiceService;
 use App\Services\PaymentService;
@@ -27,7 +33,7 @@ class InvoiceController extends Controller
         $startDateTime = $date->copy()->setTime(7, 30);
         $endDateTime = $date->copy()->addDay()->setTime(7, 30);
        // $payements = Payment::whereBetween('created_at', [$startDateTime, $endDateTime])->get();
-        $payements = Payment::query()->get();
+         $payements = Payment::query()->orderBy('created_at' ,'desc')->get();
 
         return PayementResource::collection($payements);
     }
@@ -132,5 +138,30 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice)
     {
         //
+    }
+    public function dashboard()
+    {
+        $connector = new StockConnector();
+        $request = new GetPackingListItem();
+        $response = $connector->send($request);
+        $packingList = $response->array();
+
+        $caisse_item_ids =  InvoiceItem::all()->pluck('product_id');
+
+        if ($caisse_item_ids->isEmpty()) {
+            $missingItems =  $packingList['data'];
+        } else {
+            $missingItems = array_filter($packingList['data'], function ($item) use ($caisse_item_ids) {
+                return isset($item['uuid']) && !$caisse_item_ids->contains($item['uuid']);
+            });
+        }
+        $commercial =  Commercial::where('is_deleted', 0)->get();
+        $Price =  Price::where('is_deleted', 0)->select('balle', 'colis')->get();
+
+        return response()->json([
+            'commercials' => $commercial,
+            'packingList' => $missingItems,
+            'price' => $Price
+        ]);
     }
 }

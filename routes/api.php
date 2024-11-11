@@ -10,7 +10,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/caisse/dashboard', [CashTransactionController::class , 'dashboard']);
+
 Route::resource("caisse-transactions", CashTransactionController::class);
 
+Route::get('/caisse/dashboard', [InvoiceController::class , 'dashboard']);
 Route::resource('invoices', InvoiceController::class)->only(['index','store']);
