@@ -10,7 +10,7 @@ class Commercial extends Model
     use HasFactory;
 
     protected $primaryKey = 'id';
-    protected $primaryKeyType = 'string';
+    protected $keyType = 'string';
     public $incrementing = false;
     protected $table = 'commercials';
     protected $fillable = ['name'];

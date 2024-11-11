@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('cash_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->unique();
-            $table->dateTime('start_date')->nullable();
+            $table->dateTime('start_date')->default(now());
             $table->dateTime('end_date')->nullable();
             $table->string('balance')->default('0');
             $table->string('deficit')->default('0');
-            $table->enum('status', ['pending', 'close'])->default('close');
+            $table->enum('status', ['waiting','pending', 'close'])->default('close');
             $table->timestamps();
         });
     }

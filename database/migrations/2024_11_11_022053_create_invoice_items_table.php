@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cash_transaction_items', function (Blueprint $table) {
+        Schema::create('invoice_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('cash_transaction_id')->constrained('cash_transactions')->cascadeOnDelete();
-            $table->uuid('item_id')->unique();
-            $table->string('groupage');
+            $table->foreignUuid('invoice_id')->constrained('invoices');
+            $table->string('product_id');
             $table->string('designation');
-            $table->string('type');
-            $table->string('cbm');
+            $table->enum('type' , ['balle','colis']);
+            $table->decimal('cbm');
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cash_transaction_items');
+        Schema::dropIfExists('invoice_items');
     }
 };

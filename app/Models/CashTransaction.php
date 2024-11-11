@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @method static find(String $id)
+ */
 class CashTransaction extends Model
 {
     use HasFactory, HasUuids;
@@ -17,8 +21,8 @@ class CashTransaction extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'cash_in_id',
         'name',
+        'cash_in_id',
         'build_value',
         'build_value_reduction',
         'reduction_value',
@@ -30,6 +34,7 @@ class CashTransaction extends Model
         'cash_in',
         'user_id',
         'cash_session_id',
+        'id'
     ];
 
     // Attributes that should be cast to native types
@@ -47,10 +52,15 @@ class CashTransaction extends Model
 
     public function cashSession(): BelongsTo
     {
-        return $this->belongsTo(CashSession::class);
+        return $this->belongsTo(CashSession::class, 'cash_session_id','id');
     }
 
-    public function commercial(): BelongsTo
+    public function cashTransactionItems(): HasMany
+    {
+        return $this->hasMany(CashTransactionItem::class, 'cash_transaction_id','id');
+    }
+
+    public function getCommercial(): BelongsTo
     {
         return $this->belongsTo(Commercial::class);
     }
@@ -73,7 +83,7 @@ class CashTransaction extends Model
         $transactionNumber = 1;
         $count = self::whereYear('created_at', date('Y'))->count();
         $_transactionNumber = $count + $transactionNumber;
-        $cashInId = "BS{$year}-" . str_pad($_transactionNumber, 5, '0', STR_PAD_LEFT);
+        $cashInId = "CAI{$year}-" . str_pad($_transactionNumber, 5, '0', STR_PAD_LEFT);
         while (self::where('cash_in_id', $cashInId)->exists()) {
             $_transactionNumber++;
             $cashInId = "BS{$year}-" . str_pad($_transactionNumber, 5, '0', STR_PAD_LEFT);

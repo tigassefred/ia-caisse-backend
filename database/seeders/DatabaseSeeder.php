@@ -2,10 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\CashSession;
 use App\Models\Price;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,6 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        Artisan::call('migrate:fresh');
         // User::factory(10)->create();
 
         $this->call(CommercialSeeder::class);
@@ -21,9 +24,10 @@ class DatabaseSeeder extends Seeder
             'balle' => 340000,
             'colis' => 250000,
         ]);
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        CashSession::factory()->create();
+         User::factory()->create([
+             'name' => 'Test User',
+             'email' => 'test@example.com',
+         ]);
     }
 }
