@@ -64,6 +64,7 @@ class InvoiceController extends Controller
                 'is_10Yaar' => $validatorData['is10Yaars'],
                 'is_sold' => !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
+                "customer_id"=> $validatorData['client_id']
             ];
             $invoice->createInvoice($createInvoiceData);
             $item = $validatorData['Paniers'];
@@ -85,6 +86,7 @@ class InvoiceController extends Controller
                 'cash_in' => $validatorData['isPayDiff'],
                 'reliquat' => $validatorData['reliquat'],
                 'comment' => $validatorData['comments'],
+
             ];
             $payement = new PaymentService();
             $payement->makePayment($payementData, $invoice->getInvoice()->id);

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('cash_in')->default(false);
             $table->boolean('deleted')->default(false);
             $table->text('comment')->nullable();
-            $table->enum('type' , ['1' ,'2'])->comment("1:payement , 2:remboursement");
+            $table->enum('type' , ['1' ,'2'])->comment("1:payement , 2:remboursement")->default('1');
             $table->timestamps();
         });
     }

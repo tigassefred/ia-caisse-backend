@@ -27,6 +27,7 @@ class Invoice extends Model
         'commercial_id',
         'is_10Yaar',
         'is_sold'
+
     ];
 
     protected $casts =[
