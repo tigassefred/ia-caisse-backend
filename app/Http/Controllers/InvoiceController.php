@@ -53,6 +53,7 @@ class InvoiceController extends Controller
      */
     public function store(StoreInvoiceRequest $request): \Illuminate\Http\JsonResponse
     {
+
         $validatorData = $request->validated();
         DB::beginTransaction();
         try {
@@ -64,7 +65,7 @@ class InvoiceController extends Controller
                 'is_10Yaar' => $validatorData['is10Yaars'],
                 'is_sold' => !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
-                "customer_id"=> $validatorData['client_id']
+                "customer_id"=> isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
             ];
             $invoice->createInvoice($createInvoiceData);
             $item = $validatorData['Paniers'];

@@ -23,6 +23,7 @@ class StoreInvoiceRequest extends FormRequest
     {
         return [
               'name' => 'required|string|max:255',
+            'client_id'=>"string|nullable",
             'valeur_reduction' => 'required|integer|min:0',
             'reliquat' => 'required|integer|min:0',
             'comments' => 'nullable|string',

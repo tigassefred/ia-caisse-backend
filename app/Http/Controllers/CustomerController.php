@@ -2,18 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Integrations\GetUsersRequest\Requests\GetUserRequest;
+use App\Http\Integrations\Stock\StockConnector;
 use App\Models\Customer;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): \Illuminate\Http\JsonResponse
     {
-        //
+        $connector = new StockConnector();
+        $request = new GetUserRequest();
+        $response = $connector->send($request);
+        $users = $response->array();
+         return response()->json($users);
     }
 
     /**

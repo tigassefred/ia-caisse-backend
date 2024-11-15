@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Integrations\GetUsersRequest\Requests\GetUserRequest;
+use App\Http\Integrations\Stock\StockConnector;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
+use App\Models\Invoice;
 use App\Models\Payment;
 
 class PaymentController extends Controller
@@ -13,7 +16,8 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        //
+
+
     }
 
     /**

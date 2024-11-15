@@ -15,3 +15,4 @@ Route::resource("caisse-transactions", CashTransactionController::class);
 
 Route::get('/caisse/dashboard', [InvoiceController::class , 'dashboard']);
 Route::resource('invoices', InvoiceController::class)->only(['index','store']);
+Route::get('/verify/users', [\App\Http\Controllers\CustomerController::class , 'index']);
