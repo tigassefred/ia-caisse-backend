@@ -39,14 +39,6 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      * @param StoreInvoiceRequest $request
      * @return JsonResponse
@@ -165,6 +157,29 @@ class InvoiceController extends Controller
             'commercials' => $commercial,
             'packingList' => $missingItems,
             'price' => $Price
+        ]);
+    }
+
+    public function statistics(Request $request)
+    {
+        $date = $request->input('date') ? Carbon::parse($request->input('date')) : now();
+        $startDateTime = $date->copy()->setTime(7, 30);
+        $endDateTime = $date->copy()->addDay()->setTime(7, 30);
+
+        $invoices = Invoice::query()
+            ->whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->get();
+        $payement = Payment::query()->whereIn("invoice_id" , $invoices->pluck('id'))->get();
+
+
+Log::info($payement);
+
+        return response()->json([
+           "data"=>[
+               'sommes_previsionelle'=>$invoices->sum("amount"),
+               "somme_encaisse"=>$payement->where("cash_in", true)->sum('amount'),
+               "somme_en_attente"=>$payement->where("cash_in", false)->sum('amount')
+           ]
         ]);
     }
 }

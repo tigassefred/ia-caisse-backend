@@ -41,9 +41,14 @@ class Invoice extends Model
         return $this->hasMany('App\Models\InvoiceItem','invoice_id','id');
     }
 
-    public function  Commercial(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function Commercial(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
        return $this->hasOne('App\Models\Commercial','id','commercial_id');
+    }
+
+    public function Payments()
+    {
+        return $this->hasMany("App\Models\Payment" , 'invoice_id' , 'id');
     }
 
     protected $appends = ['montant_net'];

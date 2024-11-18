@@ -17,7 +17,7 @@ class PayementResource extends JsonResource
     public function toArray(Request $request): array
     {
        $Invoice = Invoice::find($this->invoice_id);
-        return [
+        return array(
             'id'=>$this->id,
             'amount'=>$this->amount,
             'reliquat'=>$this->reliquat,
@@ -25,9 +25,9 @@ class PayementResource extends JsonResource
             'invoice'=>$Invoice,
             'items'=>$Invoice->Items,
             'cbm'=>$Invoice->Items->sum('cbm'),
-            "commercial"=>$Invoice->Commercial,
+            "commercial"=> $Invoice->Commercial,
             'cash_in'=>$this->cash_in,
 //            'commercial'=>Commercial::query()->find($this->invoixe->commercial_id),
-        ];
+        );
     }
 }

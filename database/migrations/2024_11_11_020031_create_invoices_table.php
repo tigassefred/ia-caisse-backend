@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string("name");
             $table->string("amount")->default("0");
             $table->string("discount")->default("0");
-            $table->uuid("commercial_id");
+            $table->foreignUuid("commercial_id")->constrained("commercials");
             $table->boolean('is_10Yaar')->default(false);
             $table->boolean('is_sold')->default(false);
             $table->timestamps();
