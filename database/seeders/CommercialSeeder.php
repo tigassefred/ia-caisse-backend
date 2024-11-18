@@ -14,13 +14,24 @@ class CommercialSeeder extends Seeder
      */
     public function run(): void
     {
-
-        Commercial::factory()->count(10)->create();
-        Commercial::create([
-            'name' => "SALIFOU ILBOUD",
-            "id"=>Str::uuid(),
+        Commercial::insert([
+            [
+                'name' => "SALIF ILBOUDO",
+                "short" => "S.I",
+                "id" => Str::uuid(),
+            ],
+            [
+                'name' => "SOULEYMANE OUEDRAOGO",
+                'id' => Str::uuid(),
+                'short' => 'S.O',
+            ],
+            [
+                'name' => "YACOUBA ILBOUDO",
+                'short' => 'Y.I',
+                'id' => Str::uuid(),
+            ]
         ]);
 
- 
+
     }
 }

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('commercials', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
+            $table->string('short')->nullable();
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });

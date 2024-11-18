@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         ]);
         CashSession::factory()->create();
          User::factory()->create([
-             'name' => 'Test User',
+             'name' => 'Denis Tapsoba',
              'email' => 'test@example.com',
          ]);
     }
