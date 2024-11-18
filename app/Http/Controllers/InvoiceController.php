@@ -177,8 +177,9 @@ Log::info($payement);
         return response()->json([
            "data"=>[
                'sommes_previsionelle'=>$invoices->sum("amount"),
-               "somme_encaisse"=>$payement->where("cash_in", true)->sum('amount'),
-               "somme_en_attente"=>$payement->where("cash_in", false)->sum('amount')
+               "somme_encaisse"=>$payement->sum('amount'),
+               "reliquat"=>$payement->sum('reliquat'),
+              // "somme_en_attente"=>$payement->where("cash_in", false)->sum('amount')
            ]
         ]);
     }
