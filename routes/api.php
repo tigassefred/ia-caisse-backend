@@ -18,3 +18,5 @@ Route::resource('invoices', InvoiceController::class)->only(['index','store']);
 Route::get("/invoices/statistics" , [InvoiceController::class , 'statistics']);
 Route::get('/verify/users', [\App\Http\Controllers\CustomerController::class , 'index']);
 
+Route::put("payment/versement/{id}" , [\App\Http\Controllers\PaymentController::class , 'versement']);
+

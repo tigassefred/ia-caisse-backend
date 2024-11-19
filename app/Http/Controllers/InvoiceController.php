@@ -30,10 +30,11 @@ class InvoiceController extends Controller
     public function index(Request $request)
     {
         $date = $request->input('date') ? Carbon::parse($request->input('date')) : now();
-        $startDateTime = $date->copy()->setTime(7, 30);
-        $endDateTime = $date->copy()->addDay()->setTime(7, 30);
-       // $payements = Payment::whereBetween('created_at', [$startDateTime, $endDateTime])->get();
-         $payements = Payment::query()->orderBy('created_at' ,'desc')->get();
+        $startDateTime = $date->copy()->setTime(7, 45);
+        $endDateTime = $date->copy()->addDay()->setTime(7, 45);
+        $payements = Payment::query()->
+        whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->orderBy('created_at', 'desc')->get();
 
         return PayementResource::collection($payements);
     }
@@ -57,7 +58,7 @@ class InvoiceController extends Controller
                 'is_10Yaar' => $validatorData['is10Yaars'],
                 'is_sold' => !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
-                "customer_id"=> isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
+                "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
             ];
             $invoice->createInvoice($createInvoiceData);
             $item = $validatorData['Paniers'];
@@ -81,7 +82,7 @@ class InvoiceController extends Controller
                 'comment' => $validatorData['comments'],
 
             ];
-            $payement = new PaymentService();
+            $payement = new PaymentService(null);
             $payement->makePayment($payementData, $invoice->getInvoice()->id);
             DB::commit();
             return response()->json([
@@ -134,6 +135,7 @@ class InvoiceController extends Controller
     {
         //
     }
+
     public function dashboard()
     {
         $connector = new StockConnector();
@@ -141,17 +143,17 @@ class InvoiceController extends Controller
         $response = $connector->send($request);
         $packingList = $response->array();
 
-        $caisse_item_ids =  InvoiceItem::all()->pluck('product_id');
+        $caisse_item_ids = InvoiceItem::all()->pluck('product_id');
 
         if ($caisse_item_ids->isEmpty()) {
-            $missingItems =  $packingList['data'];
+            $missingItems = $packingList['data'];
         } else {
             $missingItems = array_filter($packingList['data'], function ($item) use ($caisse_item_ids) {
                 return isset($item['uuid']) && !$caisse_item_ids->contains($item['uuid']);
             });
         }
-        $commercial =  Commercial::where('is_deleted', 0)->get();
-        $Price =  Price::where('is_deleted', 0)->select('balle', 'colis')->get();
+        $commercial = Commercial::where('is_deleted', 0)->get();
+        $Price = Price::where('is_deleted', 0)->select('balle', 'colis')->get();
 
         return response()->json([
             'commercials' => $commercial,
@@ -169,18 +171,25 @@ class InvoiceController extends Controller
         $invoices = Invoice::query()
             ->whereBetween('created_at', [$startDateTime, $endDateTime])
             ->get();
-        $payement = Payment::query()->whereIn("invoice_id" , $invoices->pluck('id'))->get();
+        $payement = Payment::query()->whereIn("invoice_id", $invoices->pluck('id'))->get();
 
+        $payement_10 = $payement->whereIn("invoice_id", $invoices->where("is_10Yaar", 1)->pluck('id'));
 
-Log::info($payement);
+        $total_invoice_debit = Invoice::query()->where('is_sold', 0)->get();
+        $total_payment_debit  = Payment::query()->whereIn("invoice_id" , $total_invoice_debit->pluck('id'))->get();
+
 
         return response()->json([
-           "data"=>[
-               'sommes_previsionelle'=>$invoices->sum("amount"),
-               "somme_encaisse"=>$payement->sum('amount'),
-               "reliquat"=>$payement->sum('reliquat'),
-              // "somme_en_attente"=>$payement->where("cash_in", false)->sum('amount')
-           ]
+            "data" => [
+                'sommes_previsionelle' => $invoices->sum("amount"),
+                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount'),
+                "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
+                "sommes_10yaar" => $payement_10->sum('amount'),
+                "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
+                "dette_cumulle" => $total_invoice_debit->sum("amount") -  $total_payment_debit->sum("amount"),
+            ]
         ]);
     }
+
+
 }

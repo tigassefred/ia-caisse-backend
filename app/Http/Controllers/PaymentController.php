@@ -8,6 +8,9 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\PaymentService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
@@ -67,4 +70,25 @@ class PaymentController extends Controller
     {
         //
     }
+
+    public function versement($id): \Illuminate\Http\JsonResponse
+    {
+        DB::beginTransaction();
+        try {
+            $pay = new PaymentService($id);
+            $pay->makeVersement();
+            DB::commit();
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json([
+                'status' => "failed",
+                "message" => "L'encaissement a échoué, veuillez réessayer"
+            ],501);
+        }
+        return response()->json([
+            "status" => 'success',
+            'message' => "La somme a été générée avec succès"
+        ]);
+    }
+
 }
