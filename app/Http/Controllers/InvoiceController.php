@@ -6,6 +6,8 @@ use App\Http\Integrations\PackingList\Requests\GetPackingListItem;
 use App\Http\Integrations\Stock\StockConnector;
 use App\Http\Requests\Invoice\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
+use App\Http\Resources\InvoiceResource;
+use App\Http\Resources\InvoiceUnpaidResource;
 use App\Http\Resources\PayementResource;
 use App\Models\CashTransactionItem;
 use App\Models\Commercial;
@@ -21,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class InvoiceController extends Controller
 {
@@ -72,8 +75,6 @@ class InvoiceController extends Controller
                 ];
                 $invoice->addInvoiceItem($data);
             }
-            Log::info(json_encode($invoice));
-
             $payementData = [
                 "user_id" => User::query()->first()->id,
                 "amount" => $validatorData['somme_verser'],
@@ -107,17 +108,10 @@ class InvoiceController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Invoice $invoice)
+    public function show($invoice)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Invoice $invoice)
-    {
-        //
+        $inv = Invoice::query()->where('id', $invoice)->first();
+        return new InvoiceResource($inv);
     }
 
     /**
@@ -142,9 +136,7 @@ class InvoiceController extends Controller
         $request = new GetPackingListItem();
         $response = $connector->send($request);
         $packingList = $response->array();
-
         $caisse_item_ids = InvoiceItem::all()->pluck('product_id');
-
         if ($caisse_item_ids->isEmpty()) {
             $missingItems = $packingList['data'];
         } else {
@@ -176,8 +168,7 @@ class InvoiceController extends Controller
         $payement_10 = $payement->whereIn("invoice_id", $invoices->where("is_10Yaar", 1)->pluck('id'));
 
         $total_invoice_debit = Invoice::query()->where('is_sold', 0)->get();
-        $total_payment_debit  = Payment::query()->whereIn("invoice_id" , $total_invoice_debit->pluck('id'))->get();
-
+        $total_payment_debit = Payment::query()->whereIn("invoice_id", $total_invoice_debit->pluck('id'))->get();
 
         return response()->json([
             "data" => [
@@ -186,10 +177,43 @@ class InvoiceController extends Controller
                 "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
                 "sommes_10yaar" => $payement_10->sum('amount'),
                 "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
-                "dette_cumulle" => $total_invoice_debit->sum("amount") -  $total_payment_debit->sum("amount"),
+                "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
             ]
         ]);
     }
 
+    public function unpaid_list()
+    {
+        $unpaidInvoice = Invoice::query()->where('is_sold', false)->
+        orderBy('created_at')->get();
+        return InvoiceUnpaidResource::collection($unpaidInvoice);
+    }
+
+    public function rembourssement($id, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'amount' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+                'status' => "failled"
+            ]);
+        }
+        try {
+            $amount = $request->amount;
+            $invoiceService = new InvoiceService($id);
+            $invoiceService->payDebit($amount);
+            return response()->json([
+                "status" => "success"
+            ]);
+        } catch (Exception $th) {
+            return response()->json([
+                "message" => "Echecs du rembourssement, veuillez recommencer",
+                'status' => "failled"
+            ], 400);
+        }
+    }
 
 }

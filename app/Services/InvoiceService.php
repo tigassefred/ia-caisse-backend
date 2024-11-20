@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class InvoiceService
@@ -48,6 +49,27 @@ class InvoiceService
         }
     }
 
+    public function payDebit(string $amount): void
+    {
+        $newAmount = intval($amount);
+        $outstanding = $this->getCreance();
+        $isFullyPaid = $outstanding <= $newAmount;
+
+        $payData = [
+            'amount' => $amount,
+            'reliquat' => $isFullyPaid ? 0 : $outstanding - $newAmount,
+            'cash_in' => true,
+            'user_id' => User::query()->first()->id,
+            'type' => '2',
+        ];
+
+        $paymentService = new PaymentService(null);
+        $paymentService->makePayment($payData, $this->getInvoice()->id);
+
+        $this->setSolded($isFullyPaid);
+    }
+
+
     public function setInvoice(Invoice $Invoice): void
     {
         $this->Invoice = $Invoice;
@@ -58,5 +80,19 @@ class InvoiceService
         return $this->Invoice;
     }
 
+    public function getCreance()
+    {
+        if ($this->Invoice) {
+            $pays = $this->getInvoice()->Payments;
+            $versement = $pays->sum('amount');
+            return $this->getInvoice()->montant_net - $versement;
+        }
+        return null;
+    }
+
+    public  function setSolded(bool $status){
+        $this->getInvoice()->is_sold = $status;
+        $this->getInvoice()->save();
+    }
 
 }

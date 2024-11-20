@@ -21,7 +21,8 @@ class Payment extends Model
         'reliquat',
         'cash_in',
         'deleted',
-        'comment'
+        'comment',
+        'type',
     ];
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo

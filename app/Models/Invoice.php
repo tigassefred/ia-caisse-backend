@@ -13,6 +13,11 @@ use Illuminate\Database\Eloquent\Model;
 class Invoice extends Model
 {
     use HasFactory , HasUuids;
+
+    /**
+     * @var bool|mixed
+     */
+
     protected $table = 'invoices';
     protected $primaryKey ='id';
     protected $keyType = 'string';

@@ -27,7 +27,7 @@ class PayementResource extends JsonResource
             'cbm'=>$Invoice->Items->sum('cbm'),
             "commercial"=> $Invoice->Commercial,
             'cash_in'=>$this->cash_in,
-//            'commercial'=>Commercial::query()->find($this->invoixe->commercial_id),
+            'type'=>$this->type,
         );
     }
 }

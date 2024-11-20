@@ -14,9 +14,11 @@ Route::get('/user', function (Request $request) {
 Route::resource("caisse-transactions", CashTransactionController::class);
 
 Route::get('/caisse/dashboard', [InvoiceController::class , 'dashboard']);
-Route::resource('invoices', InvoiceController::class)->only(['index','store']);
 Route::get("/invoices/statistics" , [InvoiceController::class , 'statistics']);
+Route::resource('invoices', InvoiceController::class)->only(['index','store' , 'show']);
+
 Route::get('/verify/users', [\App\Http\Controllers\CustomerController::class , 'index']);
+Route::get("/invoice/unpaid", [\App\Http\Controllers\InvoiceController::class , 'unpaid_list']);
+Route::put("/invoice/rembourssement/{id}" , [\App\Http\Controllers\InvoiceController::class , 'rembourssement']);
 
 Route::put("payment/versement/{id}" , [\App\Http\Controllers\PaymentController::class , 'versement']);
-
