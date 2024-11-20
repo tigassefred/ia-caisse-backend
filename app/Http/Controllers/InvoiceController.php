@@ -47,6 +47,7 @@ class InvoiceController extends Controller
     public function store(StoreInvoiceRequest $request): \Illuminate\Http\JsonResponse
     {
 
+
         $validatorData = $request->validated();
         DB::beginTransaction();
         try {
@@ -72,12 +73,10 @@ class InvoiceController extends Controller
                 ];
                 $invoice->addInvoiceItem($data);
             }
-            Log::info(json_encode($invoice));
-
             $payementData = [
                 "user_id" => User::query()->first()->id,
                 "amount" => $validatorData['somme_verser'],
-                'cash_in' => $validatorData['isPayDiff'],
+                'cash_in' => !$validatorData['isPayDiff'],
                 'reliquat' => $validatorData['reliquat'],
                 'comment' => $validatorData['comments'],
 
@@ -185,8 +184,10 @@ class InvoiceController extends Controller
                 "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount'),
                 "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
                 "sommes_10yaar" => $payement_10->sum('amount'),
+                "sommes_10yaar_verser" => $payement_10->sum('amount'),
                 "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
                 "dette_cumulle" => $total_invoice_debit->sum("amount") -  $total_payment_debit->sum("amount"),
+
             ]
         ]);
     }
