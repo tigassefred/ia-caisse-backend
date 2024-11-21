@@ -62,6 +62,7 @@ class InvoiceController extends Controller
                 'is_sold' => !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
                 "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
+                'price_id'=>Price::query()->where('is_deleted', false)->first()->id,
             ];
             $invoice->createInvoice($createInvoiceData);
             $item = $validatorData['Paniers'];
@@ -71,16 +72,17 @@ class InvoiceController extends Controller
                     "product_id" => $item["uuid"],
                     "designation" => $item['designation'],
                     "type" => $item['type'],
-                    "cbm" => $item['cbm']
+                    "cbm" => $item['cbm'],
+
                 ];
                 $invoice->addInvoiceItem($data);
             }
             $payementData = [
                 "user_id" => User::query()->first()->id,
                 "amount" => $validatorData['somme_verser'],
-                'cash_in' => $validatorData['isPayDiff'],
+                'cash_in' => !$validatorData['isPayDiff'],
                 'reliquat' => $validatorData['reliquat'],
-                'comment' => $validatorData['comments'],
+                'comment' => $validatorData['comments']
 
             ];
             $payement = new PaymentService(null);
