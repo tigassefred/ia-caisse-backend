@@ -22,3 +22,4 @@ Route::get("/invoice/unpaid", [\App\Http\Controllers\InvoiceController::class , 
 Route::put("/invoice/rembourssement/{id}" , [\App\Http\Controllers\InvoiceController::class , 'rembourssement']);
 
 Route::put("payment/versement/{id}" , [\App\Http\Controllers\PaymentController::class , 'versement']);
+Route::resource('/payments', \App\Http\Controllers\PaymentController::class)->only(['destroy']);
