@@ -36,7 +36,7 @@ class InvoiceController extends Controller
         $startDateTime = $date->copy()->setTime(7, 45);
         $endDateTime = $date->copy()->addDay()->setTime(7, 45);
         $payements = Payment::query()
-//        ->whereBetween('created_at', [$startDateTime, $endDateTime])
+        ->whereBetween('created_at', [$startDateTime, $endDateTime])
             ->orderBy('created_at', 'desc')->get();
 
         return PayementResource::collection($payements);
