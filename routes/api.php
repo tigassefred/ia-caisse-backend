@@ -23,3 +23,4 @@ Route::put("/invoice/rembourssement/{id}" , [\App\Http\Controllers\InvoiceContro
 
 Route::put("payment/versement/{id}" , [\App\Http\Controllers\PaymentController::class , 'versement']);
 Route::resource('/payments', \App\Http\Controllers\PaymentController::class)->only(['destroy']);
+Route::get('/payment/receipt/{id}', [\App\Http\Controllers\PaymentController::class , 'sendPaymentInvoice']);

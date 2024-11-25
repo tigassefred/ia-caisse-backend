@@ -6,6 +6,7 @@ use App\Http\Integrations\GetUsersRequest\Requests\GetUserRequest;
 use App\Http\Integrations\Stock\StockConnector;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
@@ -69,42 +70,43 @@ class PaymentController extends Controller
      */
     public function destroy($paymentId)
     {
-        try{
+        try {
 
 
-        // Rechercher le paiement
-        $pay = Payment::find($paymentId);
+            // Rechercher le paiement
+            $pay = Payment::find($paymentId);
 
-        if (!$pay) {
-            return response()->json(['error' => 'Payment not found'], 404);
+            if (!$pay) {
+                return response()->json(['error' => 'Payment not found'], 404);
+            }
+
+            // Rechercher la facture associée
+            $inv = Invoice::find($pay->invoice_id);
+
+            if (!$inv) {
+                return response()->json(['error' => 'Invoice not found'], 404);
+            }
+
+            // Compter le nombre de paiements associés à la facture
+            $paymentsCount = $inv->Payments()->count();
+
+            if ($paymentsCount > 1) {
+                // Si plusieurs paiements, marquer seulement le paiement comme supprimé
+                $pay->is_deleted = 1;
+                $pay->save();
+            } else {
+                // Si un seul paiement, supprimer les items et marquer la facture et le paiement comme supprimés
+                $inv->items()->delete();
+                $inv->is_deleted = 1;
+                $inv->save();
+
+                $pay->is_deleted = 1;
+                $pay->save();
+            }
+        } catch (Exception $th) {
+
+            return response()->json(['message' => 'Operation completed successfully'], 200);
         }
-
-        // Rechercher la facture associée
-        $inv = Invoice::find($pay->invoice_id);
-
-        if (!$inv) {
-            return response()->json(['error' => 'Invoice not found'], 404);
-        }
-
-        // Compter le nombre de paiements associés à la facture
-        $paymentsCount = $inv->Payments()->count();
-
-        if ($paymentsCount > 1) {
-            // Si plusieurs paiements, marquer seulement le paiement comme supprimé
-            $pay->is_deleted = 1;
-            $pay->save();
-        } else {
-            // Si un seul paiement, supprimer les items et marquer la facture et le paiement comme supprimés
-            $inv->items()->delete();
-            $inv->is_deleted = 1;
-            $inv->save();
-
-            $pay->is_deleted = 1;
-            $pay->save();
-        }
-        }catch ()
-
-        return response()->json(['message' => 'Operation completed successfully'], 200);
     }
 
 
@@ -129,8 +131,8 @@ class PaymentController extends Controller
     }
 
     public function sendPaymentInvoice($id){
-        $payment = Payment::query()->where('id', )->first();
-        $invoice  =  $payment->invoice;
+        $payment = Payment::query()->where('id', $id)->first();
+        return new PaymentReceiptResource($payment);
     }
 
 

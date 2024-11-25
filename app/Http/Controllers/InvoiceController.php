@@ -32,12 +32,26 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
-        $date = $request->input('date') ? Carbon::parse($request->input('date')) : now();
-        $startDateTime = $date->copy()->setTime(7, 45);
-        $endDateTime = $date->copy()->addDay()->setTime(7, 45);
-        $payements = Payment::query()
-        ->whereBetween('created_at', [$startDateTime, $endDateTime])
-            ->orderBy('created_at', 'desc')->get();
+        $date = $request->input('date')
+            ? Carbon::parse($request->input('date'))
+            : now();
+
+        $query = Payment::query();
+
+        if (now()->lessThan(now()->setTime(7, 45))) {
+            // Si on est avant 7h45, chercher dans la plage de la veille 7h45 à aujourd'hui 7h45
+            $endDateTime = $date->copy()->setTime(7, 45);
+            $startDateTime = $date->copy()->subDay()->setTime(7, 45);
+        } else {
+            // Si on est après 7h45, chercher dans la plage d'aujourd'hui 7h45 à demain 7h45
+            $startDateTime = $date->copy()->setTime(7, 45);
+            $endDateTime = $date->copy()->addDay()->setTime(7, 45);
+        }
+
+        $payements = $query
+            ->whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return PayementResource::collection($payements);
     }
@@ -62,7 +76,7 @@ class InvoiceController extends Controller
                 'is_sold' => !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
                 "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
-                'price_id'=>Price::query()->where('is_deleted', false)->first()->id,
+                'price_id' => Price::query()->where('is_deleted', false)->first()->id,
             ];
             $invoice->createInvoice($createInvoiceData);
             $item = $validatorData['Paniers'];
@@ -159,8 +173,16 @@ class InvoiceController extends Controller
     public function statistics(Request $request)
     {
         $date = $request->input('date') ? Carbon::parse($request->input('date')) : now();
-        $startDateTime = $date->copy()->setTime(7, 30);
-        $endDateTime = $date->copy()->addDay()->setTime(7, 30);
+
+        if (now()->lessThan(now()->setTime(7, 45))) {
+            // Si on est avant 7h45, chercher dans la plage de la veille 7h45 à aujourd'hui 7h45
+            $endDateTime = $date->copy()->setTime(7, 45);
+            $startDateTime = $date->copy()->subDay()->setTime(7, 45);
+        } else {
+            // Si on est après 7h45, chercher dans la plage d'aujourd'hui 7h45 à demain 7h45
+            $startDateTime = $date->copy()->setTime(7, 45);
+            $endDateTime = $date->copy()->addDay()->setTime(7, 45);
+        }
 
         $invoices = Invoice::query()
             ->whereBetween('created_at', [$startDateTime, $endDateTime])
@@ -217,7 +239,6 @@ class InvoiceController extends Controller
             ], 400);
         }
     }
-
 
 
 }
