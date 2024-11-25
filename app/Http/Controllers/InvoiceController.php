@@ -87,6 +87,7 @@ class InvoiceController extends Controller
                     "designation" => $item['designation'],
                     "type" => $item['type'],
                     "cbm" => $item['cbm'],
+                    'groupage'=>$item['name'],
 
                 ];
                 $invoice->addInvoiceItem($data);

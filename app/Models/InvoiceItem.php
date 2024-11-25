@@ -17,7 +17,8 @@ class InvoiceItem extends Model
         'product_id',
         'designation',
         'type',
-        'cbm'
+        'cbm',
+        'groupage',
     ];
 
     public function invoice():belongsTo
