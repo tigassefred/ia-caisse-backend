@@ -28,7 +28,6 @@ class StoreInvoiceRequest extends FormRequest
             'reliquat' => 'required|integer|min:0',
             'comments' => 'nullable|string',
             'is10Yaars' => 'required|boolean',
-            'isPayDiff' => 'required|boolean',
             'valeur_facture' => 'required|integer|min:0',
             'valeur_apres_reduction' => 'required|integer|min:0',
             'somme_verser' => 'required|integer|min:0',

@@ -17,7 +17,8 @@ class PaymentReceiptResource extends JsonResource
     public function toArray(Request $request): array
     {
         $item = [];
-        $price = Price::query()->where("is_deleted", 0)->first();
+        $price = Price::query()
+            ->where('id' , $this->invoice->price_id)->first();
         foreach ($this->Invoice->Items as $id) {
             $price_unit = $id->type === 'balle' ? $price->balle : $price->colis;
             array_push($item, [
@@ -38,6 +39,8 @@ class PaymentReceiptResource extends JsonResource
             "invoice" => $this->invoice,
             "accompte" => $accompt < 0 ? 0 : $accompt,
             'caissier' => User::query()->where('id', $this->user_id)->first()->short ?? "",
+            'created_at'=>$this->created_at,
+            'product_count'=>count($item)
 
             //'items'=>$this->Invoice->Items,
         ];

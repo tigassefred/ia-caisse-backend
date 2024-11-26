@@ -38,18 +38,19 @@ class InvoiceController extends Controller
 
         $query = Payment::query();
 
-        if (now()->lessThan(now()->setTime(7, 45))) {
-            // Si on est avant 7h45, chercher dans la plage de la veille 7h45 à aujourd'hui 7h45
-            $endDateTime = $date->copy()->setTime(7, 45);
-            $startDateTime = $date->copy()->subDay()->setTime(7, 45);
-        } else {
-            // Si on est après 7h45, chercher dans la plage d'aujourd'hui 7h45 à demain 7h45
-            $startDateTime = $date->copy()->setTime(7, 45);
-            $endDateTime = $date->copy()->addDay()->setTime(7, 45);
-        }
+            if (now()->lessThan(now()->setTime(7, 45))) {
+                // Si on est avant 7h45, chercher dans la plage de la veille 7h45 à aujourd'hui 7h45
+                $endDateTime = $date->copy()->setTime(7, 45);
+                $startDateTime = $date->copy()->subDay()->setTime(7, 45);
+            } else {
+                // Si on est après 7h45, chercher dans la plage d'aujourd'hui 7h45 à demain 7h45
+                $startDateTime = $date->copy()->setTime(7, 45);
+                $endDateTime = $date->copy()->addDay()->setTime(7, 45);
+            }
 
         $payements = $query
             ->whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->where('deleted', false)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -73,7 +74,7 @@ class InvoiceController extends Controller
                 'discount' => $validatorData['valeur_reduction'],
                 'commercial_id' => $validatorData['commercial'],
                 'is_10Yaar' => $validatorData['is10Yaars'],
-                'is_sold' => !(intval($validatorData['reliquat']) > 0),
+                'is_sold' =>  !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
                 "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
                 'price_id' => Price::query()->where('is_deleted', false)->first()->id,
@@ -95,7 +96,7 @@ class InvoiceController extends Controller
             $payementData = [
                 "user_id" => User::query()->first()->id,
                 "amount" => $validatorData['somme_verser'],
-                'cash_in' => !$validatorData['isPayDiff'],
+                'cash_in' =>  floatval($validatorData['somme_verser']) > 0 ? false: true,
                 'reliquat' => $validatorData['reliquat'],
                 'comment' => $validatorData['comments']
 
@@ -187,13 +188,18 @@ class InvoiceController extends Controller
 
         $invoices = Invoice::query()
             ->whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->where('is_deleted', false)
             ->get();
         $payement = Payment::query()->whereIn("invoice_id", $invoices->pluck('id'))->get();
 
         $payement_10 = $payement->whereIn("invoice_id", $invoices->where("is_10Yaar", 1)->pluck('id'));
 
-        $total_invoice_debit = Invoice::query()->where('is_sold', 0)->get();
-        $total_payment_debit = Payment::query()->whereIn("invoice_id", $total_invoice_debit->pluck('id'))->get();
+        $total_invoice_debit = Invoice::query()->where('is_sold', 0)
+            ->where('is_deleted',false)->get();
+
+        $total_payment_debit = Payment::query()->
+             where('deleted', false)
+            ->whereIn("invoice_id", $total_invoice_debit->pluck('id'))->get();
 
         return response()->json([
             "data" => [
@@ -210,7 +216,8 @@ class InvoiceController extends Controller
     public function unpaid_list()
     {
         $unpaidInvoice = Invoice::query()->where('is_sold', false)->
-        orderBy('created_at')->get();
+         where('is_deleted', false)
+        ->orderBy('created_at')->get();
         return InvoiceUnpaidResource::collection($unpaidInvoice);
     }
 
@@ -218,7 +225,8 @@ class InvoiceController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required',
-            'amount' => 'required'
+            'amount' => 'required',
+            'date'=>'required'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -229,7 +237,7 @@ class InvoiceController extends Controller
         try {
             $amount = $request->amount;
             $invoiceService = new InvoiceService($id);
-            $invoiceService->payDebit($amount);
+            $invoiceService->payDebit($amount , $request->date);
             return response()->json([
                 "status" => "success"
             ]);

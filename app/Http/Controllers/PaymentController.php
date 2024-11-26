@@ -72,7 +72,7 @@ class PaymentController extends Controller
     {
         try {
 
-
+            DB::beginTransaction();
             // Rechercher le paiement
             $pay = Payment::find($paymentId);
 
@@ -92,7 +92,7 @@ class PaymentController extends Controller
 
             if ($paymentsCount > 1) {
                 // Si plusieurs paiements, marquer seulement le paiement comme supprimé
-                $pay->is_deleted = 1;
+                $pay->deleted = 1;
                 $pay->save();
             } else {
                 // Si un seul paiement, supprimer les items et marquer la facture et le paiement comme supprimés
@@ -100,12 +100,14 @@ class PaymentController extends Controller
                 $inv->is_deleted = 1;
                 $inv->save();
 
-                $pay->is_deleted = 1;
+                $pay->deleted = 1;
                 $pay->save();
             }
+            DB::commit();
+            return response()->json(['messaage' => 'Payment deleted successfully', 'status' => 'success'], 200);
         } catch (Exception $th) {
-
-            return response()->json(['message' => 'Operation completed successfully'], 200);
+            DB::rollBack();
+            return response()->json(['message' => $th->getMessage()], 503);
         }
     }
 
@@ -122,7 +124,7 @@ class PaymentController extends Controller
             return response()->json([
                 'status' => "failed",
                 "message" => "L'encaissement a échoué, veuillez réessayer"
-            ],501);
+            ], 501);
         }
         return response()->json([
             "status" => 'success',
@@ -130,11 +132,11 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function sendPaymentInvoice($id){
+    public function sendPaymentInvoice($id)
+    {
         $payment = Payment::query()->where('id', $id)->first();
         return new PaymentReceiptResource($payment);
     }
-
 
 
 }

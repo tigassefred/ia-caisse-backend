@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class InvoiceService
@@ -49,7 +50,7 @@ class InvoiceService
         }
     }
 
-    public function payDebit(string $amount): void
+    public function payDebit(string $amount , string $date): void
     {
         $newAmount = intval($amount);
         $outstanding = $this->getCreance();
@@ -61,6 +62,7 @@ class InvoiceService
             'cash_in' => true,
             'user_id' => User::query()->first()->id,
             'type' => '2',
+            'created_at' => Carbon::parse($date)->toDateTimeString(),
         ];
 
         $paymentService = new PaymentService(null);
