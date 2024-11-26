@@ -49,9 +49,9 @@ class InvoiceController extends Controller
             }
 
         $payements = $query
-            ->whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->whereBetween('cash_date', [$startDateTime, $endDateTime])
             ->where('deleted', false)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('cash_date', 'desc')
             ->get();
 
         return PayementResource::collection($payements);
@@ -209,7 +209,7 @@ class InvoiceController extends Controller
                 "sommes_10yaar" => $payement_10->sum('amount'),
                 "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
                 "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
-            ]
+           ]
         ]);
     }
 
@@ -217,7 +217,7 @@ class InvoiceController extends Controller
     {
         $unpaidInvoice = Invoice::query()->where('is_sold', false)->
          where('is_deleted', false)
-        ->orderBy('created_at')->get();
+        ->orderBy('created_at' ,'desc')->get();
         return InvoiceUnpaidResource::collection($unpaidInvoice);
     }
 
