@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->timestamp('cash_date')->nullable()->after('cash_in');
+            $table->dateTime('cash_date')->nullable()->after('cash_in');
         });
 
         $payments = \App\Models\Payment::query()->get();
@@ -22,7 +22,7 @@ return new class extends Migration
         }
 
         Schema::table('payments', function (Blueprint $table) {
-            $table->timestamp('cash_date')->default(now())->nullable(false)->change();
+            $table->dateTime('cash_date')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP'))->change();
         });
     }
 

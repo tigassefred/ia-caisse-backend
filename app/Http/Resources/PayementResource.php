@@ -28,7 +28,8 @@ class PayementResource extends JsonResource
             "commercial"=> $Invoice->Commercial,
             'cash_in'=>$this->cash_in,
             'type'=>$this->type,
-            'created_at'=>$this->created_at
+            'created_at'=>$this->cash_date,
+            'comment'=>$this->comment,
         );
     }
 }

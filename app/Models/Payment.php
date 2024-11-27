@@ -23,6 +23,7 @@ class Payment extends Model
         'deleted',
         'comment',
         'type',
+        'cash_date',
     ];
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo

@@ -11,7 +11,10 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Services\PaymentService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
@@ -60,9 +63,45 @@ class PaymentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePaymentRequest $request, Payment $payment)
+    public function update(Request $request, $payment)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['message' => $validator->errors()->first()], 400);
+            }
+
+            $pay = Payment::query()->where('id', $payment)->first();
+            $inv = Invoice::query()->where('id', $pay->invoice_id)->first();
+            $inv->name = $request->name;
+            $store_date = Carbon::parse($inv->cash_date);
+            $incomming_date = Carbon::parse($request->date);
+
+            if($incomming_date->isSameDay($store_date) ){
+                $incomming_date->setTime(now()->hour, now()->minute, now()->second);
+                $pay->cash_date  = $incomming_date->format('Y-m-d H:i:s');
+            }
+
+            $pay->comment = $request->description;
+            $pay->save();
+
+            $inv->is_10Yaar = $request->is10Yaars;
+            $inv->save();
+            DB::commit();
+
+
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json(['message' => $th->getMessage()], 400);
+        }
+
+        return response()->json([
+            'message' => 'Payment updated'
+        ], 200);
     }
 
     /**
