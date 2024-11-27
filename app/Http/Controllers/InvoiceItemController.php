@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInvoiceItemRequest;
 use App\Http\Requests\UpdateInvoiceItemRequest;
+use App\Models\Invoice;
 use App\Models\InvoiceItem;
 
 class InvoiceItemController extends Controller
@@ -13,7 +14,7 @@ class InvoiceItemController extends Controller
      */
     public function index()
     {
-        //
+
     }
 
     /**
@@ -35,9 +36,13 @@ class InvoiceItemController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(InvoiceItem $invoiceItem)
+    public function show($invoiceItem)
     {
-        //
+        $inv = Invoice::query()->where('invoice_id', $invoiceItem)
+            ->orderByDesc('type')
+            ->get();
+
+        return response()->json(['data' => $inv]);
     }
 
     /**

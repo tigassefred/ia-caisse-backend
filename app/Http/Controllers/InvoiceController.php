@@ -203,12 +203,12 @@ class InvoiceController extends Controller
 
         return response()->json([
             "data" => [
-                'sommes_previsionelle' => $invoices->sum("amount"),
-                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount'),
-                "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
-                "sommes_10yaar" => $payement_10->sum('amount'),
-                "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
-                "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
+//                'sommes_previsionelle' => $invoices->sum("amount"),
+//                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount'),
+//                "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
+//                "sommes_10yaar" => $payement_10->sum('amount'),
+//                "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
+//                "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
            ]
         ]);
     }
