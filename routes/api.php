@@ -25,4 +25,6 @@ Route::put("payment/versement/{id}" , [\App\Http\Controllers\PaymentController::
 Route::resource('/payments', \App\Http\Controllers\PaymentController::class)->only(['destroy' , 'update']);
 Route::get('/payment/receipt/{id}', [\App\Http\Controllers\PaymentController::class , 'sendPaymentInvoice']);
 
-Route::resource('invoices-items' , [\App\Http\Controllers\InvoiceItemController::class])->only(['show']);
+Route::resource('invoices-items' , \App\Http\Controllers\InvoiceItemController::class)->only(['show']);
+
+Route::resource('/caisses' , \App\Http\Controllers\CaisseController::class)->only(['index']);

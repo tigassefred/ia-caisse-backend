@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('caisse_items', function (Blueprint $table) {
-            $table->uuid('id');
-            $table->string('packing_list_id');
-            $table->foreignUuid('caisse_uuid')->constrained('caisses' ,'id')->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('caisses', function (Blueprint $table) {
+            //
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('caisse_items');
+        Schema::table('caisses', function (Blueprint $table) {
+            //
+        });
     }
 };

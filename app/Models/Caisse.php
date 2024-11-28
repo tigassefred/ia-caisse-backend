@@ -13,16 +13,21 @@ class Caisse extends Model
 
 
     protected $fillable = [
-        'name',
-        'valeur_net',
-        'valeur_reel',
-        'valeur_reliquat',
-        'valeur_encaisse',
-        'comment',
-        'caisse_id',
+        'id',
+        'start_date',
+        'end_date',
+        'transaction',
+        'encaissement',
+        'creance',
+        'rembourssement',
+        '10yaar',
+        'magazin',
+        'versement_magasin',
+        'versement_10yaar',
+        'status'
     ];
 
-    public function Items(){
-        return $this->hasMany(CaisseItem::class);
+    public function Invoices(){
+        return $this->hasMany(Invoice::class);
     }
 }

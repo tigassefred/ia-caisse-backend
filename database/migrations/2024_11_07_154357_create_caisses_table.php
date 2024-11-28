@@ -13,13 +13,17 @@ return new class extends Migration
     {
         Schema::create('caisses', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('caisse_id')->unique();
-            $table->string('name');
-            $table->string('valeur_net');
-            $table->string('valeur_reel');
-            $table->string('valeur_reliquat');
-            $table->string('valeur_encaisse');
-            $table->string('comment');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date');
+            $table->string('transaction');
+            $table->string('encaissement');
+            $table->string('creance');
+            $table->string('remboursement');
+            $table->string('10yaar');
+            $table->string('magazin');
+            $table->string('versement_magasin');
+            $table->string('versement_10yaar');
+            $table->boolean('status')->default(false);
             $table->timestamps();
         });
     }

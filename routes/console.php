@@ -3,9 +3,9 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+//Artisan::command('inspire', function () {
+//    $this->comment(Inspiring::quote());
+//})->purpose('Display an inspiring quote')->hourly();
 
 
-\Illuminate\Support\Facades\Schedule::job(new \App\Jobs\createCreanceForNotCashIn)->everySecond();
+\Illuminate\Support\Facades\Schedule::command('app:update-defer-pay')->everyMinute()->sendOutputTo('con.log');
