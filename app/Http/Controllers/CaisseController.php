@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Validator;
 class CaisseController extends Controller
 {
 
-
     /**
      * Display a listing of the resource.
      */

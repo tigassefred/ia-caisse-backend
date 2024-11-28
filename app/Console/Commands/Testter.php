@@ -1,22 +1,35 @@
 <?php
 
+namespace App\Console\Commands;
+
 use App\Models\Caisse;
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-return new class extends Migration {
+class Testter extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'app:testter';
 
     /**
-     * Run the migrations.
+     * The console command description.
+     *
+     * @var string
      */
-    public function up(): void
+    protected $description = 'Command description';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle()
     {
-
-
         $date = \Illuminate\Support\Carbon::now()->subDays(10);
         $diff = $date->diffInDays(\Illuminate\Support\Carbon::now());
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -40,16 +53,18 @@ return new class extends Migration {
             $endDate = $date->copy()->endOfDay();     // Fin de la journée
 
             $payment = \App\Models\Invoice::query()
-                ->whereBetween('created_at', [$startDate, $endDate])
+               ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
 
-            foreach ($payment as $pay){
-                $pay->caisse_id = $id;
-                $pay->save();
-            }
+           $this->error($payment->count());
+
+           foreach ($payment as $pay){
+               $pay->caisse_id = $id;
+               $pay->save();
+           }
 
 
-            $invCount = \App\Models\Invoice::whereBetween('created_at', [$startDate, $endDate ])->count();
+            $invCount = \App\Models\Invoice::whereBetween('created_at', [$date->startOfDay(), $date->endOfDay()])->count();
 
             if ($invCount === 0) {
 
@@ -60,22 +75,5 @@ return new class extends Migration {
             $date->addDay();
         }
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
-         Schema::table('invoices', function (Blueprint $table) {
-             $table->uuid('caisse_id')->nullable(false)->change();
-         });
-
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-         Schema::table('invoices', function (Blueprint $table) {
-             $table->uuid('caisse_id')->nullable()->change();
-         });
-
-         \App\Models\Invoice::query()->update(['caisse_id' => null]);
-    }
-};
+}

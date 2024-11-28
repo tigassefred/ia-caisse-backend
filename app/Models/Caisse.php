@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Caisse extends Model
 {
+    use HasUuids;
+
     protected $table = 'caisses';
     protected $primaryKey = 'id';
     public $timestamps = true;
@@ -19,7 +22,7 @@ class Caisse extends Model
         'transaction',
         'encaissement',
         'creance',
-        'rembourssement',
+        'remboursement',
         '10yaar',
         'magazin',
         'versement_magasin',

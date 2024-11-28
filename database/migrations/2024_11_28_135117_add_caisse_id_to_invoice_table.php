@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->uuid('caisse_id');
+            $table->uuid('caisse_id')->nullable();
             $table->foreign('caisse_id')->references('id')->on('caisses');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->dropForeign('caisse_id');
+            $table->dropForeign('invoices_caisse_id_foreign');
             $table->dropColumn('caisse_id');
         });
     }

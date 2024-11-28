@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('caisses', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->dateTime('start_date');
-            $table->dateTime('end_date');
+            $table->dateTime('start_date')->unique();
+            $table->dateTime('end_date')->unique();
             $table->string('transaction');
             $table->string('encaissement');
             $table->string('creance');
