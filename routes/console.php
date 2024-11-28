@@ -8,4 +8,4 @@ use Illuminate\Support\Facades\Artisan;
 //})->purpose('Display an inspiring quote')->hourly();
 
 
-\Illuminate\Support\Facades\Schedule::command('app:update-defer-pay')->everyMinute()->sendOutputTo('con.log');
+\Illuminate\Support\Facades\Schedule::command('app:update-defer-pay')->everyMinute();
