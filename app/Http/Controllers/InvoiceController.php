@@ -269,6 +269,7 @@ class InvoiceController extends Controller
                 'status' => "failled"
             ]);
         }
+   
         try {
             $amount = $request->amount;
             $invoiceService = new InvoiceService($id);
@@ -276,7 +277,7 @@ class InvoiceController extends Controller
             return response()->json([
                 "status" => "success"
             ]);
-        } catch (Exception $th) {
+        } catch (\Exception $th) {
             return response()->json([
                 "message" => "Echecs du rembourssement, veuillez recommencer",
                 'status' => "failled"

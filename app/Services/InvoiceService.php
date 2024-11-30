@@ -62,7 +62,7 @@ class InvoiceService
             'cash_in' => true,
             'user_id' => User::query()->first()->id,
             'type' => '2',
-            'cash_in_date' => $date
+            'cash_in_date' => Carbon::parse($date)->setTime(now()->hour, now()->minute, now()->second)->toDateTimeString()
         ];
 
         $paymentService = new PaymentService(null);
