@@ -3,6 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\Caisse;
+use App\Models\Invoice;
+use App\Models\Payment;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,50 +33,38 @@ class Testter extends Command
      */
     public function handle()
     {
-        $date = \Illuminate\Support\Carbon::now()->subDays(10);
-        $diff = $date->diffInDays(\Illuminate\Support\Carbon::now());
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        for ($i = 0; $i <= intval($diff) + 1; $i++) {
-            $id = Str::uuid()->toString();
-            Caisse::insert([
-                'start_date' => $date->copy()->startOfDay(),
-                'end_date' => $date->copy()->endOfDay(),
-                'transaction' => "0",
-                'encaissement' => "0",
-                'creance' => "0",
-                'remboursement' => "0",
-                '10yaar' => "0",
-                'magazin' => "0",
-                'versement_magasin' => "0",
-                'versement_10yaar' => "0",
-                'id' => $id
-            ]);
-
-            $startDate = $date->copy()->startOfDay(); // Début de la journée
-            $endDate = $date->copy()->endOfDay();     // Fin de la journée
-
-            $payment = \App\Models\Invoice::query()
-               ->whereBetween('created_at', [$startDate, $endDate])
+        DB::beginTransaction();
+        try {
+            $caisse_en_cours = Caisse::query()->where('status', 0)->get();
+            $invs = Invoice::query()->whereIn('caisse_id', $caisse_en_cours->pluck('id'))->pluck('id');
+            $payment = Payment::query()->where("cash_in", 0)
+                ->whereIn('invoice_id', $invs)
                 ->get();
 
-           $this->error($payment->count());
+            foreach ($payment as $p) {
+                $p->cash_in = 1;
+                $p->reliquat = strval((intval($p->reliquat) + intval($p->amount)));
+                $p->amount = 0;
+                $p->save();
 
-           foreach ($payment as $pay){
-               $pay->caisse_id = $id;
-               $pay->save();
-           }
-
-
-            $invCount = \App\Models\Invoice::whereBetween('created_at', [$date->startOfDay(), $date->endOfDay()])->count();
-
-            if ($invCount === 0) {
-
-                Caisse::where('id', $id)->delete();
-
+                $inv = Invoice::query()->find($p->invoice_id);
+                if ($inv) {
+                    $inv->is_sold = 0;
+                    $inv->save();
+                } else {
+                    $this->error("Invoice not found for payment ID: " . $p->id);
+                    throw new Exception("Invoice not found for payment ID: " . $p->id);
+                }
             }
 
-            $date->addDay();
+            DB::commit();
+            $this->info($payment->count() . " deferment payments updated.");
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->error("An error occurred: " . $e->getMessage());
+            // Optionally log the exception
+            Log::error('Error updating payments: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         }
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
     }
 }

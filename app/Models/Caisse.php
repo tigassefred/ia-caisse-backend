@@ -23,7 +23,7 @@ class Caisse extends Model
         'encaissement',
         'creance',
         'remboursement',
-        '10yaar',
+        '_10yaar',
         'magazin',
         'versement_magasin',
         'versement_10yaar',

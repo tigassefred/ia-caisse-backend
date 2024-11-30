@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('encaissement');
             $table->string('creance');
             $table->string('remboursement');
-            $table->string('10yaar');
+            $table->string('_10yaar');
             $table->string('magazin');
             $table->string('versement_magasin');
             $table->string('versement_10yaar');

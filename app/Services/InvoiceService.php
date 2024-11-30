@@ -62,7 +62,7 @@ class InvoiceService
             'cash_in' => true,
             'user_id' => User::query()->first()->id,
             'type' => '2',
-            'cash_date' => Carbon::parse($date)->toDateTimeString(),
+            'cash_in_date' => $date
         ];
 
         $paymentService = new PaymentService(null);
@@ -85,7 +85,7 @@ class InvoiceService
     public function getCreance()
     {
         if ($this->Invoice) {
-            $pays = $this->getInvoice()->Payments;
+            $pays = $this->getInvoice()->Payments->where('deleted', 0);
             $versement = $pays->sum('amount');
             return $this->getInvoice()->montant_net - $versement;
         }

@@ -7,6 +7,7 @@ use App\Http\Integrations\Stock\StockConnector;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Resources\PaymentReceiptResource;
+use App\Models\Caisse;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
@@ -68,7 +69,8 @@ class PaymentController extends Controller
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required'
+                'name' => 'required',
+                'caisse' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -78,22 +80,15 @@ class PaymentController extends Controller
             $pay = Payment::query()->where('id', $payment)->first();
             $inv = Invoice::query()->where('id', $pay->invoice_id)->first();
             $inv->name = $request->name;
-            $store_date = Carbon::parse($inv->cash_date);
-            $incomming_date = Carbon::parse($request->date);
-
-            if($incomming_date->isSameDay($store_date) ){
-                $incomming_date->setTime(now()->hour, now()->minute, now()->second);
-                $pay->cash_date  = $incomming_date->format('Y-m-d H:i:s');
-            }
-
+            $inv->caisse_id = $request->caisse;
+            $pay->cash_in_date = Caisse::query()->where('id', $request->caisse)->first()->start_date;
             $pay->comment = $request->description;
             $pay->save();
 
             $inv->is_10Yaar = $request->is10Yaars;
             $inv->save();
+            $pay->save();
             DB::commit();
-
-
         } catch (\Exception $th) {
             DB::rollBack();
             return response()->json(['message' => $th->getMessage()], 400);
@@ -132,6 +127,7 @@ class PaymentController extends Controller
             if ($paymentsCount > 1) {
                 // Si plusieurs paiements, marquer seulement le paiement comme supprimé
                 $pay->deleted = 1;
+                $inv->is_sold = 0;
                 $pay->save();
             } else {
                 // Si un seul paiement, supprimer les items et marquer la facture et le paiement comme supprimés

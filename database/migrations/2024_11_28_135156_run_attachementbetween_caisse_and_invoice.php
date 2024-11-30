@@ -15,12 +15,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-
-
-        $date = \Illuminate\Support\Carbon::now()->subDays(10);
-        $diff = $date->diffInDays(\Illuminate\Support\Carbon::now());
+        $date = \Illuminate\Support\Carbon::now()->subDays(20);
+        $diff = $date->diffInDays(\Illuminate\Support\Carbon::now()->addDay());
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         for ($i = 0; $i <= intval($diff) + 1; $i++) {
+            $startDate = $date->copy()->startOfDay(); // Début de la journée
+            $endDate = $date->copy()->endOfDay();     // Fin de la journée
             $id = Str::uuid()->toString();
             Caisse::insert([
                 'start_date' => $date->copy()->startOfDay(),
@@ -29,15 +30,13 @@ return new class extends Migration {
                 'encaissement' => "0",
                 'creance' => "0",
                 'remboursement' => "0",
-                '10yaar' => "0",
+                '_10yaar' => "0",
                 'magazin' => "0",
                 'versement_magasin' => "0",
                 'versement_10yaar' => "0",
                 'id' => $id
             ]);
 
-            $startDate = $date->copy()->startOfDay(); // Début de la journée
-            $endDate = $date->copy()->endOfDay();     // Fin de la journée
 
             $payment = \App\Models\Invoice::query()
                 ->whereBetween('created_at', [$startDate, $endDate])
@@ -64,7 +63,6 @@ return new class extends Migration {
          Schema::table('invoices', function (Blueprint $table) {
              $table->uuid('caisse_id')->nullable(false)->change();
          });
-
     }
 
     /**

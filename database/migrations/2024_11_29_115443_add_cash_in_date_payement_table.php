@@ -12,17 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->dateTime('cash_date')->nullable()->after('cash_in');
+            $table->dateTime('cash_in_date')->nullable()->after('cash_in');
         });
 
         $payments = \App\Models\Payment::query()->get();
         foreach ($payments as $pay){
-            $pay->cash_date = $pay->created_at;
+            $pay->cash_in_date = $pay->created_at;
             $pay->save();
         }
 
         Schema::table('payments', function (Blueprint $table) {
-            $table->dateTime('cash_date')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP'))->change();
+            $table->dateTime('cash_in_date')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP'))->change();
         });
     }
 
@@ -32,7 +32,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->dropColumn('cash_date');
+            $table->dropColumn('cash_in_date');
         });
     }
 };

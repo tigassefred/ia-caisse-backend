@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Integrations\PackingList\Requests\GetPackingListItem;
 use App\Http\Integrations\Stock\StockConnector;
+use App\Http\Resources\caisseResource;
 use App\Models\Caisse;
 use App\Models\CaisseItem;
 use App\Models\Commercial;
 use App\Models\Price;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -20,8 +22,22 @@ class CaisseController extends Controller
      */
     public function index()
     {
-        $caisse = Caisse::query()->get();
-        return response()->json(['data' => $caisse], 200);
+        $caisse = Caisse::query()->orderBy('start_date', 'desc')->get();
+        return CaisseResource::collection($caisse);
+    }
+
+    public function latest()
+    {
+        $caisse = Caisse::query()->orderBy('start_date', 'desc')->limit(3)->get();
+        $casher = [];
+        foreach ($caisse as $caisse) {
+            array_push($casher, [
+                'id' => $caisse->id,
+                'start_date' => "Caisse : ".Carbon::parse($caisse->start_date)->format('M d'),
+                'status' => $caisse->status,
+            ]);
+        }
+        return response()->json($casher);
     }
 
     /**

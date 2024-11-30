@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Http\Resources\InvoiceUnpaidResource;
 use App\Http\Resources\PayementResource;
+use App\Models\Caisse;
 use App\Models\CashTransactionItem;
 use App\Models\Commercial;
 use App\Models\Invoice;
@@ -36,25 +37,33 @@ class InvoiceController extends Controller
             ? Carbon::parse($request->input('date'))
             : now();
 
+        $endDateTime = $date->copy()->endOfDay();
+        $startDateTime = $date->copy()->startOfDay();
+
+        $caisse = Caisse::whereBetween('start_date', [$startDateTime, $endDateTime])->first();
+        if (!$caisse) {
+            return response()->json([]);
+        }
+
+        $invoices = Invoice::query()->where('caisse_id', $caisse->id)->get();
+
         $query = Payment::query();
 
-            if (now()->lessThan(now()->setTime(7, 45))) {
-                // Si on est avant 7h45, chercher dans la plage de la veille 7h45 à aujourd'hui 7h45
-                $endDateTime = $date->copy()->setTime(7, 45);
-                $startDateTime = $date->copy()->subDay()->setTime(7, 45);
-            } else {
-                // Si on est après 7h45, chercher dans la plage d'aujourd'hui 7h45 à demain 7h45
-                $startDateTime = $date->copy()->setTime(7, 45);
-                $endDateTime = $date->copy()->addDay()->setTime(7, 45);
-            }
+        $datePaymnent = Payment::query()
+            ->where('deleted', 0)
+            ->orderBy('created_at', 'desc')
+            ->whereBetween('cash_in_date', [$startDateTime, $endDateTime])->get();
 
         $payements = $query
-            ->whereBetween('cash_date', [$startDateTime, $endDateTime])
-            ->where('deleted', false)
-            ->orderBy('cash_date', 'desc')
+            ->whereIn('invoice_id', $invoices->pluck('id'))
+            ->where('deleted', 0)
+            ->whereNotIn('id', $datePaymnent->pluck('id'))
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        return PayementResource::collection($payements);
+        $allPay = $payements->merge($datePaymnent);
+
+        return PayementResource::collection($allPay);
     }
 
     /**
@@ -74,10 +83,12 @@ class InvoiceController extends Controller
                 'discount' => $validatorData['valeur_reduction'],
                 'commercial_id' => $validatorData['commercial'],
                 'is_10Yaar' => $validatorData['is10Yaars'],
-                'is_sold' =>  !(intval($validatorData['reliquat']) > 0),
+                'is_sold' => !(intval($validatorData['reliquat']) > 0),
                 'name' => $validatorData['name'],
                 "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
                 'price_id' => Price::query()->where('is_deleted', false)->first()->id,
+                'caisse_id' => Caisse::query()->where('status', 1)->first()->id
+
             ];
             $invoice->createInvoice($createInvoiceData);
             $item = $validatorData['Paniers'];
@@ -88,7 +99,7 @@ class InvoiceController extends Controller
                     "designation" => $item['designation'],
                     "type" => $item['type'],
                     "cbm" => $item['cbm'],
-                    'groupage'=>$item['name'],
+                    'groupage' => $item['name'],
 
                 ];
                 $invoice->addInvoiceItem($data);
@@ -96,7 +107,7 @@ class InvoiceController extends Controller
             $payementData = [
                 "user_id" => User::query()->first()->id,
                 "amount" => $validatorData['somme_verser'],
-                'cash_in' =>  floatval($validatorData['somme_verser']) > 0 ? false: true,
+                'cash_in' => floatval($validatorData['somme_verser']) > 0 ? false : true,
                 'reliquat' => $validatorData['reliquat'],
                 'comment' => $validatorData['comments']
 
@@ -174,50 +185,74 @@ class InvoiceController extends Controller
 
     public function statistics(Request $request)
     {
-        $date = $request->input('date') ? Carbon::parse($request->input('date')) : now();
+        $date = $request->input('date')
+            ? Carbon::parse($request->input('date'))
+            : now();
 
-        if (now()->lessThan(now()->setTime(7, 45))) {
-            // Si on est avant 7h45, chercher dans la plage de la veille 7h45 à aujourd'hui 7h45
-            $endDateTime = $date->copy()->setTime(7, 45);
-            $startDateTime = $date->copy()->subDay()->setTime(7, 45);
-        } else {
-            // Si on est après 7h45, chercher dans la plage d'aujourd'hui 7h45 à demain 7h45
-            $startDateTime = $date->copy()->setTime(7, 45);
-            $endDateTime = $date->copy()->addDay()->setTime(7, 45);
+        $endDateTime = $date->copy()->endOfDay();
+        $startDateTime = $date->copy()->startOfDay();
+
+        $caisse = Caisse::whereBetween('start_date', [$startDateTime, $endDateTime])->first();
+        if (!$caisse) {
+            return response()->json([
+                "data" => [
+                    'sommes_previsionelle' => 0,
+                    "somme_encaisse" => 0,
+                    "rembourssement"=>0,
+                    "somme_en_attente" => 0,
+                    "reliquat" => 0,
+                    "sommes_10yaar" => 0,
+                    'magasin'=>0,
+                    "dette_cumulle" => 0,
+                ]
+            ]);
         }
 
-        $invoices = Invoice::query()
-            ->whereBetween('created_at', [$startDateTime, $endDateTime])
+
+        $invoices = Invoice::query()->where('caisse_id', $caisse->id)
             ->where('is_deleted', false)
             ->get();
-        $payement = Payment::query()->whereIn("invoice_id", $invoices->pluck('id'))->get();
+        $payement = Payment::query()->whereIn("invoice_id", $invoices->pluck('id'))
+            ->where('deleted', 0)
+            ->where('type',1)->get();
 
+        $rembourssement = Payment::query()->whereBetween('cash_in_date',[$startDateTime, $endDateTime])
+            ->where('deleted', 0)
+            ->where('type',2)->get();
+
+
+        $magasin = $payement->whereIn("invoice_id", $invoices->where("is_10Yaar", 0)->pluck('id'));
         $payement_10 = $payement->whereIn("invoice_id", $invoices->where("is_10Yaar", 1)->pluck('id'));
 
+
         $total_invoice_debit = Invoice::query()->where('is_sold', 0)
-            ->where('is_deleted',false)->get();
+            ->where('is_deleted', false)->get();
 
         $total_payment_debit = Payment::query()->
-             where('deleted', false)
+        where('deleted', false)
             ->whereIn("invoice_id", $total_invoice_debit->pluck('id'))->get();
 
         return response()->json([
             "data" => [
-//                'sommes_previsionelle' => $invoices->sum("amount"),
-//                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount'),
-//                "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
-//                "sommes_10yaar" => $payement_10->sum('amount'),
-//                "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
-//                "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
-           ]
+                'sommes_previsionelle' => $invoices->sum("amount") + $rembourssement->sum("amount"),
+                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount')+$rembourssement->sum('amount'),
+                "rembourssement"=>$rembourssement->sum('amount'),
+                "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
+                "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
+
+                "sommes_10yaar" => $payement_10->where('cash_in', true)->sum('amount'),
+                'magasin'=>$magasin->where('cash_in', true)->sum('amount'),
+
+                "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
+            ]
         ]);
     }
 
     public function unpaid_list()
     {
         $unpaidInvoice = Invoice::query()->where('is_sold', false)->
-         where('is_deleted', false)
-        ->orderBy('created_at' ,'desc')->get();
+        where('is_deleted', false)
+            ->orderBy('created_at', 'desc')->get();
         return InvoiceUnpaidResource::collection($unpaidInvoice);
     }
 
@@ -226,7 +261,7 @@ class InvoiceController extends Controller
         $validator = Validator::make($request->all(), [
             'id' => 'required',
             'amount' => 'required',
-            'date'=>'required'
+            'date' => 'required'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -237,7 +272,7 @@ class InvoiceController extends Controller
         try {
             $amount = $request->amount;
             $invoiceService = new InvoiceService($id);
-            $invoiceService->payDebit($amount , $request->date);
+            $invoiceService->payDebit($amount, $request->date);
             return response()->json([
                 "status" => "success"
             ]);

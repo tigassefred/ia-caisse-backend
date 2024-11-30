@@ -28,3 +28,4 @@ Route::get('/payment/receipt/{id}', [\App\Http\Controllers\PaymentController::cl
 Route::resource('invoices-items' , \App\Http\Controllers\InvoiceItemController::class)->only(['show']);
 
 Route::resource('/caisses' , \App\Http\Controllers\CaisseController::class)->only(['index']);
+Route::get('/caisses/latest', [\App\Http\Controllers\CaisseController::class , 'latest']);

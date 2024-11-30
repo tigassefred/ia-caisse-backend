@@ -15,7 +15,7 @@ class InvoiceUnpaidResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $payment = $this->Payments;
+        $payment = $this->Payments->where('deleted', 0);
         return [
             'id' => $this->id,
             'invoice_id' => $this->invoice_id,
@@ -25,7 +25,8 @@ class InvoiceUnpaidResource extends JsonResource
             'versement' => $payment->sum("amount"),
             'reste_payer' => $this->montant_net - $payment->sum("amount"),
             'created_at' => $this->created_at,
-            'date' => Carbon::parse($this->created_at)->format("d/m/Y")
+            'date' => Carbon::parse($this->created_at)->format("d/m/Y"),
+            'caisse_id'=>$this->caisse_id,
 
         ];
     }

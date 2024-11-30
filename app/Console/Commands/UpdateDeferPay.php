@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Caisse;
 use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Console\Command;
@@ -31,7 +32,10 @@ class UpdateDeferPay extends Command
     {
         DB::beginTransaction();
         try {
+            $Casher = Caisse::query()->where('status', 1)->first();
+            $invoices = Invoice::query()->where('caisse_id', $Casher->id)->get();
             $payment = Payment::query()->where("cash_in", 0)
+                ->whereIn('invoice_id', $invoices->pluck('id'))
                 ->get();
 
             foreach ($payment as $p) {
@@ -49,9 +53,8 @@ class UpdateDeferPay extends Command
                     throw new Exception("Invoice not found for payment ID: " . $p->id);
                 }
             }
-
-           DB::commit();
             $this->info($payment->count() . " deferment payments updated.");
+           DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
             $this->error("An error occurred: " . $e->getMessage());
