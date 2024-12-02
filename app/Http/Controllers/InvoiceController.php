@@ -238,7 +238,7 @@ class InvoiceController extends Controller
                 "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount')+$rembourssement->sum('amount'),
                 "rembourssement"=>$rembourssement->sum('amount'),
                 "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
-                "reliquat" => $payement->where('cash_in', 1)->sum('reliquat'),
+                "reliquat" =>$this->getInvoicesDebit($invoices->pluck('id')),
 
                 "sommes_10yaar" => $payement_10->where('cash_in', true)->sum('amount'),
                 'magasin'=>$magasin->where('cash_in', true)->sum('amount'),
@@ -283,6 +283,25 @@ class InvoiceController extends Controller
                 'status' => "failled"
             ], 400);
         }
+    }
+
+    private function getInvoiceDebit($id)
+    {
+        $invoice = Invoice::query()->where('id', $id)->first();
+        $payment = Payment::query()->where('invoice_id', $id)
+        ->where('cash_in', 1)
+        ->where('deleted', 0)->get();
+        $totalInvoiceDebit = $invoice->amount - ($payment->sum('amount') + $invoice->discount);
+        return $totalInvoiceDebit;
+    }
+
+    private function getInvoicesDebit($invoice_ids)
+    {
+        $totalDebit = 0;
+        foreach ($invoice_ids as $id) {
+            $totalDebit += $this->getInvoiceDebit($id);
+        }
+        return $totalDebit;
     }
 
 

@@ -11,7 +11,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::resource("caisse-transactions", CashTransactionController::class);
+//Route::resource("caisse-transactions", CashTransactionController::class);
 
 Route::get('/caisse/dashboard', [InvoiceController::class , 'dashboard']);
 Route::get("/invoices/statistics" , [InvoiceController::class , 'statistics']);
@@ -29,3 +29,10 @@ Route::resource('invoices-items' , \App\Http\Controllers\InvoiceItemController::
 
 Route::resource('/caisses' , \App\Http\Controllers\CaisseController::class)->only(['index']);
 Route::get('/caisses/latest', [\App\Http\Controllers\CaisseController::class , 'latest']);
+
+
+Route::get('/creance/{period}/general', [\App\Http\Controllers\CreanceController::class , 'creance_mensuelle']);
+Route::get('/creance/commercial/{period}/general', [\App\Http\Controllers\CreanceController::class , 'creance_mensuelle_commercial']);
+Route::get('/creance/commercial/{id}', [\App\Http\Controllers\CreanceController::class , 'creance-mensuelle']);
+
+
