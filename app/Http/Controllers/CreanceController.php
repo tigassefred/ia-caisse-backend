@@ -45,22 +45,27 @@ class CreanceController extends Controller
         $response = [];
         foreach ($commerciaux  as $com) {
             $CommercialInvoices = $allInvoices->where('commercial_id', $com->id);
+            $allPay = Payment::query()->whereIn('invoice_id', $CommercialInvoices->pluck('id'))
+                ->where('deleted',0)->get();
             $items = null;
             foreach ($CommercialInvoices as $invoice) {
                 $items[] = [
                     'name' => $invoice->name,
-                    'amount' => $invoice->amount,
-                    'discount' => $invoice->discount,
+                    'amount' => number_format($invoice->amount , 0, ',',' '),
+                    'discount' => number_format($invoice->discount, 0, ',',' '),
                     'date' => SupportCarbon::parse($invoice->created_at)->format('d/m/Y'),
-                    'reste' => $this->getInvoiceDebit($invoice->id),
+                    'reste' => $this->getInvoiceDebit($invoice->id) < 0 ? 0 : number_format($this->getInvoiceDebit($invoice->id),0,',',' ') ,
+                    'bl'=>$invoice->invoice_id,
+                    'payer'=>number_format(Payment::query()->where('invoice_id', $invoice->id)->sum('amount'), 0, ',',' '),
                 ];
             }
 
             $response['commercials'][] = [
                 'name' => $com->name,
-                'somme_attendu' => $CommercialInvoices->sum('amount'),
-                'somme_encaisse' => $this->getInvoicesDebit($CommercialInvoices->pluck('id')),
-                'reduction' => $CommercialInvoices->sum('discount'),
+                'somme_attendu' => number_format($CommercialInvoices->sum('amount'),0,',',' '),
+                'somme_creance' => number_format($this->getInvoicesDebit($CommercialInvoices->pluck('id')),0,',',' '),
+                'somme_encaisse' => number_format($allPay->sum('amount'),0,',',' '),
+                'reduction' => number_format($CommercialInvoices->sum('discount'),0,',',' '),
                 'start_date' => $period_start->format('d/m/Y'),
                 'end_date' => $period_end->format('d/m/Y'),
                 "items" => $items,
@@ -89,20 +94,21 @@ class CreanceController extends Controller
 
         $caisses = Caisse::whereBetween('start_date', [$period_start, $period_end])->get();
 
-        $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))->get();
+        $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
+            ->where('is_deleted',0)->get();
 
 
-        $allPayment = Payment::query()->whereIn('invoice_id', $allInvoices->pluck('id'))->get();
-        $response = [];
+        $allPayment = Payment::query()->whereIn('invoice_id', $allInvoices->pluck('id'))
+            ->where('deleted',0)->get();
 
         $response = [
             "global" => [
-                "somme_attendu" => $allInvoices->sum('amount'),
-                "somme_encaisse" => $allPayment->where('cash_in', 1)->sum('amount'),
-                "somme_creance" => $this->getInvoicesDebit($allInvoices->pluck('id')),
-                "somme_10yaar" => $allInvoices->where('cash_in', 1)->where('is_10Yaar', 1)->sum('amount'),
-                "somme_magazin" => $allInvoices->where('cash_in', 1)->where('is_10Yaar', 0)->sum('amount'),
-                "reduction" => $allInvoices->sum('discount'),
+                "somme_attendu" => number_format($allInvoices->sum('amount'), 0, '', ' '),
+                "somme_encaisse" => number_format($allPayment->where('cash_in', 1)->sum('amount'), 0, '', ' '),
+                "somme_creance" =>number_format($this->getInvoicesDebit($allInvoices->pluck('id')), 0, '', ' '),
+                "somme_10yaar" => number_format($allPayment->where('cash_in', 1)->whereIn('invoice_id', $allInvoices->where("is_10Yaar",1)->pluck('id'))->sum('amount'), 0, '', ' '),
+                "somme_magazin" => number_format($allPayment->where('cash_in', 1)->whereIn('invoice_id', $allInvoices->where("is_10Yaar",0 )->pluck('id'))->sum('amount'), 0, '', ' '),
+                "reduction" => number_format($allInvoices->sum('discount'), 0, '', ' '),
                 'start_date' => $period_start->format('d/m/Y'),
                 'end_date' => $period_end->format('d/m/Y'),
             ],
@@ -110,7 +116,6 @@ class CreanceController extends Controller
         ];
 
         $commerciaux = Commercial::query()->orderBy('name')->get();
-        $items = [];
 
         foreach ($commerciaux  as $com) {
             $CommercialInvoices = $allInvoices->where('commercial_id', $com->id);
@@ -119,10 +124,10 @@ class CreanceController extends Controller
             if (count($pay) > 0) {
                 $response['details'][] = [
                     'name' => $com->name,
-                    'somme_attendu' => $CommercialInvoices->sum('amount'),
-                    'somme_encaisse' => $pay->where('cash_in', 1)->sum('amount'),
-                    'somme_creance' => $this->getInvoicesDebit($CommercialInvoices->pluck('id')),
-                    'reduction' => $CommercialInvoices->sum('discount'),
+                    'somme_attendu' => number_format($CommercialInvoices->sum('amount'),0,'.',' '),
+                    'somme_encaisse' =>number_format( $pay->where('cash_in', 1)->sum('amount'),0,'.',' '),
+                    'somme_creance' => number_format($this->getInvoicesDebit($CommercialInvoices->pluck('id')),0,'.',' '),
+                    'reduction' => number_format($CommercialInvoices->sum('discount'),0,'.',' '),
                 ];
             }
         }
