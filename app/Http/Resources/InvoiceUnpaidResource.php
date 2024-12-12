@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceUnpaidResource extends JsonResource
 {
@@ -16,6 +17,7 @@ class InvoiceUnpaidResource extends JsonResource
     public function toArray(Request $request): array
     {
         $payment = $this->Payments->where('deleted', 0);
+        Log::info($this->invoice_id);
         return [
             'id' => $this->id,
             'invoice_id' => $this->invoice_id,

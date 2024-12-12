@@ -51,17 +51,20 @@ class InvoiceController extends Controller
 
         $datePaymnent = Payment::query()
             ->where('deleted', 0)
+            ->where('type', '2')
             ->orderBy('created_at', 'desc')
-            ->whereBetween('cash_in_date', [$startDateTime, $endDateTime])->get();
+            ->where(DB::raw('DATE(cash_in_date)'), '=', $startDateTime->format('Y-m-d'))
+            ->get();
 
         $payements = $query
             ->whereIn('invoice_id', $invoices->pluck('id'))
             ->where('deleted', 0)
-            ->whereNotIn('id', $datePaymnent->pluck('id'))
+            ->where('type', 1)
             ->orderBy('created_at', 'desc')
             ->get();
 
         $allPay = $payements->merge($datePaymnent);
+        $allPay = $allPay->sortByDesc('created_at');
 
         return PayementResource::collection($allPay);
     }
@@ -250,9 +253,12 @@ class InvoiceController extends Controller
 
     public function unpaid_list()
     {
-        $unpaidInvoice = Invoice::query()->where('is_sold', false)->
-        where('is_deleted', false)
-            ->orderBy('created_at', 'desc')->get();
+        $unpaidInvoice = Invoice::query()
+            ->where('is_sold', false)
+            ->where('is_deleted', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return InvoiceUnpaidResource::collection($unpaidInvoice);
     }
 
@@ -269,7 +275,7 @@ class InvoiceController extends Controller
                 'status' => "failled"
             ]);
         }
-   
+
         try {
             $amount = $request->amount;
             $invoiceService = new InvoiceService($id);

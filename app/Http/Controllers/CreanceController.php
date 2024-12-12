@@ -39,16 +39,21 @@ class CreanceController extends Controller
 
         $caisses = Caisse::whereBetween('start_date', [$period_start, $period_end])->get();
 
-        $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))->get();
+        $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
+            ->where('is_deleted',0)->get();
         $commerciaux = Commercial::query()->orderBy('name')->get();
 
         $response = [];
         foreach ($commerciaux  as $com) {
             $CommercialInvoices = $allInvoices->where('commercial_id', $com->id);
             $allPay = Payment::query()->whereIn('invoice_id', $CommercialInvoices->pluck('id'))
-                ->where('deleted',0)->get();
+                ->where('deleted',0)
+                ->get();
             $items = null;
+
             foreach ($CommercialInvoices as $invoice) {
+
+
                 $items[] = [
                     'name' => $invoice->name,
                     'amount' => number_format($invoice->amount , 0, ',',' '),
@@ -56,7 +61,9 @@ class CreanceController extends Controller
                     'date' => SupportCarbon::parse($invoice->created_at)->format('d/m/Y'),
                     'reste' => $this->getInvoiceDebit($invoice->id) < 0 ? 0 : number_format($this->getInvoiceDebit($invoice->id),0,',',' ') ,
                     'bl'=>$invoice->invoice_id,
-                    'payer'=>number_format(Payment::query()->where('invoice_id', $invoice->id)->sum('amount'), 0, ',',' '),
+                    'payer'=>number_format(Payment::query()->where('invoice_id', $invoice->id)
+                        ->where('deleted',0)->sum('amount'), 0, ',',' '),
+                    'comments'=>$allPay->where('invoice_id', $invoice->id),
                 ];
             }
 
@@ -69,9 +76,9 @@ class CreanceController extends Controller
                 'start_date' => $period_start->format('d/m/Y'),
                 'end_date' => $period_end->format('d/m/Y'),
                 "items" => $items,
+
             ];
         }
-
 
         return response()->json([
             'data' => $response
@@ -140,10 +147,9 @@ class CreanceController extends Controller
 
     private function getInvoiceDebit($id)
     {
-        $invoice = Invoice::query()->where('id', $id)->first();
-        $payment = Payment::query()->where('invoice_id', $id)->where('deleted', 0)->get();
-        $totalInvoiceDebit = $invoice->amount - ($payment->sum('amount') + $invoice->discount);
-        return $totalInvoiceDebit;
+        $invoice = Invoice::query()->where('is_deleted',0)->where('id', $id)->first();
+        $payment = Payment::query()->where('deleted', 0)->where('invoice_id', $id)->get();
+        return $invoice->amount - ($payment->sum('amount') + $invoice->discount);
     }
 
     private function getInvoicesDebit($invoice_ids)
@@ -154,4 +160,7 @@ class CreanceController extends Controller
         }
         return $totalDebit;
     }
+
+
+
 }
