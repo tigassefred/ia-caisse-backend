@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Payment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -55,20 +56,33 @@ class InvoiceService
         $newAmount = intval($amount);
         $outstanding = $this->getCreance();
         $isFullyPaid = $outstanding <= $newAmount;
+        $invoice = $this->getInvoice();
 
-        $payData = [
-            'amount' => $amount,
-            'reliquat' => $isFullyPaid ? 0 : $outstanding - $newAmount,
-            'cash_in' => true,
-            'user_id' => User::query()->first()->id,
-            'type' => '2',
-            'cash_in_date' => Carbon::parse($date)->setTime(now()->hour, now()->minute, now()->second)->toDateTimeString()
-        ];
+        $PayFirst = Payment::query()->where('invoice_id' , $invoice->id)
+            ->where('type',1)->first();
 
-        $paymentService = new PaymentService(null);
-        $paymentService->makePayment($payData, $this->getInvoice()->id);
+        $cashDate = Carbon::parse($PayFirst->cash_in_date);
 
-        $this->setSolded($isFullyPaid);
+        if($cashDate->isToday()){
+           $newTotal = $PayFirst->amount + $newAmount;
+           $PayFirst->amount = $newTotal;
+           $PayFirst->cash_in_date = Carbon::parse($date)->setTime(now()->hour, now()->minute, now()->second)->toDateTimeString();
+           $PayFirst->reliquat = $isFullyPaid ? 0 : $outstanding - $newTotal;
+           $PayFirst->save();
+        }else{
+            $payData = [
+                'amount' => $amount,
+                'reliquat' => $isFullyPaid ? 0 : $outstanding - $newAmount,
+                'cash_in' => true,
+                'user_id' => User::query()->first()->id,
+                'type' => '2',
+                'cash_in_date' => Carbon::parse($date)->setTime(now()->hour, now()->minute, now()->second)->toDateTimeString()
+            ];
+            $paymentService = new PaymentService(null);
+            $paymentService->makePayment($payData, $this->getInvoice()->id);
+            $this->setSolded($isFullyPaid);
+        }
+
     }
 
 
