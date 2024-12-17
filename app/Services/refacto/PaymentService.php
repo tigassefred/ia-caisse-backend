@@ -3,35 +3,66 @@
 namespace App\Services\refacto;
 
 use App\Models\Invoice;
+use App\Models\Payment;
+use Illuminate\Support\Carbon;
 
 class PaymentService
 {
-    public string $ID;
-    public Invoice $invoice;
+    public $newPayment = [
+        'amount'=>0,
+        'user_id'=>null,
+        'type'=>1,
+        'comment'=>null,
+        'cash_in'=>false,
+        'deleted'=>false,
+        'reliquat'=>0,
+        'comment'=>null,
+    ];
+    public ?string $id = null;
 
-    public function __construct(?string $ID)
+    public function __construct(?string $id)
     {
-        if ($ID != null) {
-            $this->ID = $ID;
-            $this->fetchInvoiceFromDatabase($ID);
+        $this->id = $id;
+    }
+
+    public function setAmount(int $amount)
+    {
+        $this->newPayment['amount'] = $amount;
+    }
+
+    public function setUser(string $id)
+    {
+        $this->newPayment['user_id'] = $id;
+    }
+    public function setReliquat(int $reliquat)
+    {
+        $this->newPayment['reliquat'] = $reliquat;
+    }
+    public function setType(int $type)
+    {
+        $this->newPayment['type'] = $type;
+    }
+
+    public function setComment(string $comment)
+    {
+        $this->newPayment['comment'] = $comment;
+    }
+
+    public function getPayment(){
+        return $this->newPayment;
+    }
+
+    public static function CASH_IN($id  , ?string $date = null){
+        if ($date == null) {
+           Payment::query()->where('id',$id)->update(['cash_in'=>true , 'cash_in_date'=>Carbon::now()]);
+        } else {
+            Payment::query()->where('id',$id)->update(['cash_in'=>true,'cash_in_date'=>$date]);
         }
+    }   
+   
+    public static function UN_CASH_IN($id){
+        Payment::query()->where('id',$id)->update(['cash_in'=>false]);
     }
-
-    private function fetchInvoiceFromDatabase(string $ID): void
-    {
-        $this->invoice = Invoice::query()->where('id', $ID)->firstOrFail();
-    }
-
-    public function getInvoice(): Invoice
-    {
-        return $this->invoice;
-    }
-
-    public function createInvoice(Invoice $invoice): void
-    {
-
-    }
-
 
 }
 
