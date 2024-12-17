@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 class InvoiceTest extends TestCase
 {
-    use RefreshDatabase;
+   use RefreshDatabase;
     /**
      * A basic unit test example.
      */
@@ -74,7 +74,7 @@ class InvoiceTest extends TestCase
         InvoiceServices::SOLDED(Invoice::first()->id);
         $this->assertEquals(Invoice::first()->is_sold , true);
 
-        InvoiceServices::UNSOLDED(Invoice::first()->id);    
+        InvoiceServices::UNSOLDED(Invoice::first()->id);
         $this->assertEquals(Invoice::first()->is_sold , false);
 
         PaymentService::CASH_IN(Invoice::first()->payments->first()->id);
@@ -89,7 +89,28 @@ class InvoiceTest extends TestCase
         Commercial::factory()->create();
         Price::factory()->create();
         Caisse::factory()->create();
+        $this->assertEquals(Invoice::query()->count(), 0);
 
+        $invoice = new InvoiceServices(null);
+        $invoice->setNewInvoice("john doe", 1000, 0, Caisse::first()->id, true);
+        $invoice->setCommercial(Commercial::first()->id);
+        $invoice->setPrice(Price::first()->id);
+        $invoice->createInvoice();
+        $this->assertEquals(Invoice::query()->count(), 1);
+        $id = $invoice->getInvoice()->id;
+
+
+        $payment = new PaymentService(null);
+        $payment->setAmount(1000);
+        $payment->setType(1);
+        $payment->setUser(User::query()->first()->id);
+        $this->assertDatabaseHas('invoices', ['id' => $id]);
+
+        $payment->setReliquat(InvoiceServices::GET_RELIQUAT($id , 1000));
+
+        InvoiceServices::ATTACHE_PAIEMENT($id , $payment->getPayment());
+        $this->assertEquals(Invoice::first()->payments->first()->amount , 1000);
+        $this->assertEquals(Invoice::first()->payments->first()->is_sold , 0);
         
     }
 }

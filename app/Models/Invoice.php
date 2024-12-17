@@ -32,7 +32,8 @@ class Invoice extends Model
         'commercial_id',
         'is_10Yaar',
         'is_sold',
-        'caisse_id'
+        'caisse_id',
+        'price_id'
 
     ];
 

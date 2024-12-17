@@ -11,16 +11,16 @@ class InvoiceServices
     public ?Invoice $invoice = null;
     public ?string $id = null;
     private $newInvoice = [
-          'name'=>'',
-          'amount'=>0,
-          'discount'=>0,
-          'is_10Yaar'=>false,
-          'commercial_id'=>null,
-          'price_id'=>null,
-          'caisse_id'=>null,
-          'is_sold'=>false,
-          'customer_id'=>null,
-          'deleted'=>true,
+        'name' => '',
+        'amount' => 0,
+        'discount' => 0,
+        'is_10Yaar' => false,
+        'commercial_id' => null,
+        'price_id' => null,
+        'caisse_id' => null,
+        'is_sold' => false,
+        'customer_id' => null,
+        'deleted' => true,
     ];
 
     public function __construct(?string $id)
@@ -36,13 +36,13 @@ class InvoiceServices
         $this->invoice = Invoice::query()->where('id', $id)->firstOrFail();
     }
 
-    public function setNewInvoice(string $name, int $amount, int $discount, string $caisse ,?bool $zone):void
+    public function setNewInvoice(string $name, int $amount, int $discount, string $caisse, ?bool $zone): void
     {
-         $this->newInvoice['name'] = strtoupper($name);
-         $this->newInvoice['amount'] = $amount;
-         $this->newInvoice['discount'] = $discount;
-         $this->newInvoice['is_10Yaar'] = $zone;
-         $this->newInvoice['caisse_id'] = $caisse;
+        $this->newInvoice['name'] = strtoupper($name);
+        $this->newInvoice['amount'] = $amount;
+        $this->newInvoice['discount'] = $discount;
+        $this->newInvoice['is_10Yaar'] = $zone;
+        $this->newInvoice['caisse_id'] = $caisse;
     }
 
     public function setCommercial(string $id)
@@ -61,15 +61,19 @@ class InvoiceServices
         $this->newInvoice['price_id'] = $id;
     }
 
-    public function createInvoice(){
-        $this->invoice = Invoice::create($this->newInvoice);
+    public function createInvoice()
+    {
+        $tmp =  Invoice::create($this->newInvoice);
+        $this->populateInvoice($tmp->id);
     }
 
-    public function getInvoice(){
+    public function getInvoice()
+    {
         return $this->invoice;
     }
 
-    public function getPaiements(){
+    public function getPaiements()
+    {
         return $this->newInvoice;
     }
 
@@ -77,14 +81,38 @@ class InvoiceServices
     {
         Invoice::query()->where('id', $id)->update(['is_sold' => true]);
     }
+
     public static function UNSOLDED($id)
     {
         Invoice::query()->where('id', $id)->update(['is_sold' => false]);
     }
 
-    public static function ATTACHE_PAIEMENT($id , $paiement){
-         Invoice::query()->where('id',$id)->first()->payments()->create($paiement);
-         Invoice::query()->where('id',$id)->update(['is_deleted'=>false]);
+    public static function ATTACHE_PAIEMENT($id, $paiement)
+    {
+        Invoice::query()->where('id', $id)->first()->payments()->create($paiement);
+        Invoice::query()->where('id', $id)->update(['is_deleted' => false]);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public static function GET_RELIQUAT($id, $amount = 0): float|int
+    {
+        try {
+            $invoice = Invoice::query()->where('id', $id)->first();
+            $totalAmount = (float)$invoice->amount;
+            $totalPayments = 0.0;
+            if (count($invoice->payments) > 0) {
+                foreach ($invoice->payments as $payment) {
+                    $totalPayments += (float)$payment->amount;
+                }
+            }
+            $remainingAmount = $totalAmount - ($totalPayments + floatval($amount));
+
+            return ($remainingAmount > 0) ? $remainingAmount : 0;
+        }catch (\Exception $e){
+            dd($e->getMessage());
+        }
     }
 
 }
