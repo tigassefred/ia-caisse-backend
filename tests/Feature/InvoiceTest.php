@@ -11,11 +11,19 @@ use App\Services\refacto\InvoiceServices;
 use App\Services\refacto\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class InvoiceTest extends TestCase
 {
-   use RefreshDatabase;
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Artisan::call('db:seed');
+    }
+
     /**
      * A basic unit test example.
      */
