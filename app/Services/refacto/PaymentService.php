@@ -14,7 +14,7 @@ class PaymentService
         'type'=>1,
         'comment'=>null,
         'cash_in'=>false,
-        'deleted'=>false,
+        'deleted'=>true,
         'reliquat'=>0,
         'comment'=>null,
     ];
@@ -43,13 +43,19 @@ class PaymentService
         $this->newPayment['type'] = $type;
     }
 
-    public function setComment(string $comment)
+    public function setComment(?string $comment=null)
     {
-        $this->newPayment['comment'] = $comment;
+        $this->newPayment['comment'] = $comment ;
     }
 
     public function getPayment(){
-        return $this->newPayment;
+        return Payment::query()->where('id',$this->id)->first();
+    }
+    public function getPaymentById($id){
+        return Payment::query()->where('id',$id)->first();
+    }
+    public function getPaymentByInvoice($id){
+        return Payment::query()->where('invoice_id',$id)->first();
     }
 
     public static function CASH_IN($id  , ?string $date = null){
@@ -62,6 +68,14 @@ class PaymentService
    
     public static function UN_CASH_IN($id){
         Payment::query()->where('id',$id)->update(['cash_in'=>false]);
+    }
+
+    public static function DELETE_PAYMENT($id){
+        Payment::query()->where('id',$id)->update(['deleted'=>true]);
+    }
+
+    public static function RESTORE_PAYMENT($id){
+        Payment::query()->where('id',$id)->update(['deleted'=>false]);
     }
 
 }

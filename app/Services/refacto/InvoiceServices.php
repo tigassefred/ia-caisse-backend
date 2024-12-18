@@ -4,7 +4,9 @@ namespace App\Services\refacto;
 
 use App\Models\Commercial;
 use App\Models\Invoice;
-
+use App\Models\InvoiceItem;
+use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceServices
 {
@@ -53,7 +55,6 @@ class InvoiceServices
         } else {
             throw new \Exception("Le commercial est introuvable");
         }
-
     }
 
     public function setPrice(string $id)
@@ -89,9 +90,31 @@ class InvoiceServices
 
     public static function ATTACHE_PAIEMENT($id, $paiement)
     {
-        Invoice::query()->where('id', $id)->first()->payments()->create($paiement);
-        Invoice::query()->where('id', $id)->update(['is_deleted' => false]);
+        $pay = new Payment($paiement);
+        $invoice = Invoice::query()->where('id', $id)->first();
+        $pay->invoice()->associate($invoice);
+        $pay->save();
+        $invoice->is_deleted = false;
+        $invoice->save();
     }
+
+    /**
+     * @throws \Exception
+     */
+    public function addInvoiceItem(array $data): void
+    {
+        try {
+            if ($this->getInvoice() != null) {
+                $items = new InvoiceItem($data);
+                $items->invoice()->associate($this->getInvoice());
+                $items->save();
+            }
+        } catch (\Exception $exception) {
+            Log::error($exception->getMessage());
+            throw new \Exception("Echec de creation de la nouvelle facture");
+        }
+    }
+
 
     /**
      * @throws \Exception
@@ -100,21 +123,22 @@ class InvoiceServices
     {
         try {
             $invoice = Invoice::query()->where('id', $id)->first();
-            $totalAmount = (float)$invoice->amount;
+            $totalAmount = (float)$invoice->amount - (float) $invoice->discount;
             $totalPayments = 0.0;
             if (count($invoice->payments) > 0) {
                 foreach ($invoice->payments as $payment) {
-                    $totalPayments += (float)$payment->amount;
+                    if ($payment->deleted == false) {
+                        $totalPayments += (float)$payment->amount;
+                    }
                 }
             }
             $remainingAmount = $totalAmount - ($totalPayments + floatval($amount));
 
             return ($remainingAmount > 0) ? $remainingAmount : 0;
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             dd($e->getMessage());
         }
     }
-
 }
 /**
  * 1. creer un invoice

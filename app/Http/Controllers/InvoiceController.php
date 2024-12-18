@@ -19,6 +19,8 @@ use App\Models\Price;
 use App\Models\User;
 use App\Services\InvoiceService;
 use App\Services\PaymentService;
+use App\Services\refacto\InvoiceServices;
+use App\Services\refacto\PaymentService as RefactoPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -80,48 +82,39 @@ class InvoiceController extends Controller
         $validatorData = $request->validated();
         DB::beginTransaction();
         try {
-            $invoice = new InvoiceService();
-            $createInvoiceData = [
-                'amount' => $validatorData['valeur_facture'],
-                'discount' => $validatorData['valeur_reduction'],
-                'commercial_id' => $validatorData['commercial'],
-                'is_10Yaar' => $validatorData['is10Yaars'],
-                'is_sold' => !(intval($validatorData['reliquat']) > 0),
-                'name' => $validatorData['name'],
-                "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
-                'price_id' => Price::query()->where('is_deleted', false)->first()->id,
-                'caisse_id' => Caisse::query()->where('status', 1)->first()->id
+            $invoice = new InvoiceServices(null);
+            $name = $validatorData['name'];
+            $amount = $validatorData['valeur_facture'];
+            $dicount = $validatorData['valeur_reduction'];
+            $caisse = Caisse::query()->where('status', 1)->first()->id;
+            $zone = $validatorData['is10Yaars'];
 
-            ];
-            $invoice->createInvoice($createInvoiceData);
-            $item = $validatorData['Paniers'];
+            $invoice->setNewInvoice($name, $amount, $dicount, $caisse, $zone);
+            $invoice->setCommercial($validatorData['commercial']);
+            $invoice->setPrice(Price::query()->where('is_deleted', false)->first()->id);
+            $invoice->createInvoice();
 
-            foreach ($item as $item) {
-                $data = [
+            foreach ($validatorData['Paniers'] as $item) {
+                $invoice->addInvoiceItem([
                     "product_id" => $item["uuid"],
                     "designation" => $item['designation'],
                     "type" => $item['type'],
                     "cbm" => $item['cbm'],
                     'groupage' => $item['name'],
-
-                ];
-                $invoice->addInvoiceItem($data);
+                ]);
             }
-            $payementData = [
-                "user_id" => User::query()->first()->id,
-                "amount" => $validatorData['somme_verser'],
-                'cash_in' => floatval($validatorData['somme_verser']) > 0 ? false : true,
-                'reliquat' => $validatorData['reliquat'],
-                'comment' => $validatorData['comments']
 
-            ];
-            $payement = new PaymentService(null);
-            $payement->makePayment($payementData, $invoice->getInvoice()->id);
-            DB::commit();
-            return response()->json([
-                "status" => 'success',
-                'message' => 'Le bon de caisse a ete genere avec success'
-            ], 200);
+            $payment = new RefactoPaymentService(null);
+            $payment->setAmount(floatval($validatorData['somme_verser']));
+            $payment->settype(1);
+            $payment->setUser(User::first()->id);
+            $payment->setReliquat(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id,  $validatorData['reliquat']));
+            $payment->setComment($validatorData['comments']);
+
+            InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id , $payment->getPayment());
+            RefactoPaymentService::RESTORE_PAYMENT($payment->getPaymentByInvoice($invoice->getInvoice()->id)->id);
+            DB::commit();   
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::info("***************************************************");
@@ -133,8 +126,70 @@ class InvoiceController extends Controller
                 [
                     'message' => "L'enregistrement a été interrompu. Veuillez vérifier vos informations s'il vous plaît.!",
                     'status' => 'failed'
-                ], status: 400);
+                ],
+                status: 400
+            );
         }
+
+
+        // try {
+        //     $invoice = new InvoiceService();
+        //     $createInvoiceData = [
+        //         'amount' => $validatorData['valeur_facture'],
+        //         'discount' => $validatorData['valeur_reduction'],
+        //         'commercial_id' => $validatorData['commercial'],
+        //         'is_10Yaar' => $validatorData['is10Yaars'],
+        //         'is_sold' => !(intval($validatorData['reliquat']) > 0),
+        //         'name' => $validatorData['name'],
+        //         "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
+        //         'price_id' => Price::query()->where('is_deleted', false)->first()->id,
+        //         'caisse_id' => Caisse::query()->where('status', 1)->first()->id
+
+        //     ];
+        //     $invoice->createInvoice($createInvoiceData);
+        //     $item = $validatorData['Paniers'];
+
+        //     foreach ($item as $item) {
+        //         $data = [
+        //             "product_id" => $item["uuid"],
+        //             "designation" => $item['designation'],
+        //             "type" => $item['type'],
+        //             "cbm" => $item['cbm'],
+        //             'groupage' => $item['name'],
+
+        //         ];
+        //         $invoice->addInvoiceItem($data);
+        //     }
+        //     $payementData = [
+        //         "user_id" => User::query()->first()->id,
+        //         "amount" => $validatorData['somme_verser'],
+        //         'cash_in' => floatval($validatorData['somme_verser']) > 0 ? false : true,
+        //         'reliquat' => $validatorData['reliquat'],
+        //         'comment' => $validatorData['comments']
+
+        //     ];
+        //     $payement = new PaymentService(null);
+        //     $payement->makePayment($payementData, $invoice->getInvoice()->id);
+        //     DB::commit();
+        //     return response()->json([
+        //         "status" => 'success',
+        //         'message' => 'Le bon de caisse a ete genere avec success'
+        //     ], 200);
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     Log::info("***************************************************");
+        //     Log::error($e->getCode());
+        //     Log::error($e->getLine());
+        //     Log::error($e->getMessage());
+        //     Log::info("***************************************************");
+        //     return response()->json(
+        //         [
+        //             'message' => "L'enregistrement a été interrompu. Veuillez vérifier vos informations s'il vous plaît.!",
+        //             'status' => 'failed'
+        //         ],
+        //         status: 400
+        //     );
+        // }
     }
 
     /**
@@ -201,11 +256,11 @@ class InvoiceController extends Controller
                 "data" => [
                     'sommes_previsionelle' => 0,
                     "somme_encaisse" => 0,
-                    "rembourssement"=>0,
+                    "rembourssement" => 0,
                     "somme_en_attente" => 0,
                     "reliquat" => 0,
                     "sommes_10yaar" => 0,
-                    'magasin'=>0,
+                    'magasin' => 0,
                     "dette_cumulle" => 0,
                 ]
             ]);
@@ -217,11 +272,11 @@ class InvoiceController extends Controller
             ->get();
         $payement = Payment::query()->whereIn("invoice_id", $invoices->pluck('id'))
             ->where('deleted', 0)
-            ->where('type',1)->get();
+            ->where('type', 1)->get();
 
-        $rembourssement = Payment::query()->whereBetween('cash_in_date',[$startDateTime, $endDateTime])
+        $rembourssement = Payment::query()->whereBetween('cash_in_date', [$startDateTime, $endDateTime])
             ->where('deleted', 0)
-            ->where('type',2)->get();
+            ->where('type', 2)->get();
 
 
         $magasin = $payement->whereIn("invoice_id", $invoices->where("is_10Yaar", 0)->pluck('id'));
@@ -231,20 +286,19 @@ class InvoiceController extends Controller
         $total_invoice_debit = Invoice::query()->where('is_sold', 0)
             ->where('is_deleted', false)->get();
 
-        $total_payment_debit = Payment::query()->
-        where('deleted', false)
+        $total_payment_debit = Payment::query()->where('deleted', false)
             ->whereIn("invoice_id", $total_invoice_debit->pluck('id'))->get();
 
         return response()->json([
             "data" => [
                 'sommes_previsionelle' => $invoices->sum("amount") + $rembourssement->sum("amount"),
-                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount')+$rembourssement->sum('amount'),
-                "rembourssement"=>$rembourssement->sum('amount'),
+                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount') + $rembourssement->sum('amount'),
+                "rembourssement" => $rembourssement->sum('amount'),
                 "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
-                "reliquat" =>$this->getInvoicesDebit($invoices->pluck('id')),
+                "reliquat" => $this->getInvoicesDebit($invoices->pluck('id')),
 
                 "sommes_10yaar" => $payement_10->where('cash_in', true)->sum('amount'),
-                'magasin'=>$magasin->where('cash_in', true)->sum('amount'),
+                'magasin' => $magasin->where('cash_in', true)->sum('amount'),
 
                 "dette_cumulle" => $total_invoice_debit->sum("amount") - $total_payment_debit->sum("amount"),
             ]
@@ -295,8 +349,8 @@ class InvoiceController extends Controller
     {
         $invoice = Invoice::query()->where('id', $id)->first();
         $payment = Payment::query()->where('invoice_id', $id)
-        ->where('cash_in', 1)
-        ->where('deleted', 0)->get();
+            ->where('cash_in', 1)
+            ->where('deleted', 0)->get();
         $totalInvoiceDebit = $invoice->amount - ($payment->sum('amount') + $invoice->discount);
         return $totalInvoiceDebit;
     }
@@ -309,6 +363,4 @@ class InvoiceController extends Controller
         }
         return $totalDebit;
     }
-
-
 }
