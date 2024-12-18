@@ -9,6 +9,7 @@ use App\Models\Price;
 use App\Models\User;
 use App\Services\refacto\InvoiceServices;
 use App\Services\refacto\PaymentService;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Artisan;
@@ -21,33 +22,21 @@ class InvoiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Artisan::call('db:seed');
+        $this->seed(TestSeeder::class);
     }
 
     /**
      * A basic unit test example.
      */
-    public function test_it_can_create_an_invoice(): void
-    {
-        User::factory()->create();
-        Commercial::factory()->create();
-        Price::factory()->create();
-        Caisse::factory()->create();
-    }
+    public function test_it_can_create_an_invoice(): void {}
 
     public function test_it_can_create_an_invoice_white_debit_status(): void
     {
-        User::factory()->create();
-        Commercial::factory()->create();
-        Price::factory()->create();
-        Caisse::factory()->create();
+      
     }
 
     public function test_it_can_delete_an_invoice(): void
     {
-        User::factory()->create();
-        Commercial::factory()->create();
-        Price::factory()->create();
-        Caisse::factory()->create();
+
     }
 }
