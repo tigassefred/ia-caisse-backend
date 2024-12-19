@@ -88,14 +88,31 @@ class InvoiceServices
         Invoice::query()->where('id', $id)->update(['is_sold' => false]);
     }
 
+    public function activeInvoice(){
+        if($this->getInvoice() != null){
+            $tmp =  Invoice::query()->where('id', $this->getInvoice()->id)->first();
+            $tmp->is_deleted = false;
+            $tmp->save();
+        }
+    }
+
     public static function ATTACHE_PAIEMENT($id, $paiement)
     {
-        $pay = new Payment($paiement);
-        $invoice = Invoice::query()->where('id', $id)->first();
-        $pay->invoice()->associate($invoice);
+       try {
+        $pay = new Payment();
+        $pay->amount = $paiement['amount'];
+        $pay->user_id = $paiement['user_id'];
+        $pay->type = $paiement['type'];
+        $pay->comment = $paiement['comment'];
+        $pay->deleted = false;
+        $pay->reliquat = $paiement['reliquat'];
+        $pay->invoice_id = $id;
         $pay->save();
-        $invoice->is_deleted = false;
-        $invoice->save();
+        return $pay->id;
+       }catch (\Exception $e) {
+           Log::error($e->getMessage());
+           throw new \Exception("Echec de creation de la nouvelle facture");
+       }
     }
 
     /**

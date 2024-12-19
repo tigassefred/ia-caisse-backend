@@ -42,7 +42,33 @@ class PaymentController extends Controller
      */
     public function store(StorePaymentRequest $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'amount' => 'required',
+            'date' => 'required',
+            'discount' => 'nullable|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+                'status' => "failled"
+            ]);
+        }
+
+        try {
+            $amount = $request->amount;
+            $invoiceService = new InvoiceService($id);
+            $invoiceService->payDebit($amount, $request->date);
+            return response()->json([
+                "status" => "success"
+            ]);
+        } catch (\Exception $th) {
+            return response()->json([
+                "message" => "Echecs du rembourssement, veuillez recommencer",
+                'status' => "failled"
+            ], 400);
+        }
     }
 
     /**

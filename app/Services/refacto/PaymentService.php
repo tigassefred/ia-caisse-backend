@@ -18,6 +18,7 @@ class PaymentService
         'reliquat'=>0,
         'comment'=>null,
     ];
+
     public ?string $id = null;
 
     public function __construct(?string $id)
@@ -54,8 +55,12 @@ class PaymentService
     public function getPaymentById($id){
         return Payment::query()->where('id',$id)->first();
     }
-    public function getPaymentByInvoice($id){
-        return Payment::query()->where('invoice_id',$id)->first();
+    public function getPaymentsByInvoice($id){
+        return Payment::query()->where('invoice_id',$id)->get();
+    }
+    public function getNewPay(){
+
+        return $this->newPayment;
     }
 
     public static function CASH_IN($id  , ?string $date = null){

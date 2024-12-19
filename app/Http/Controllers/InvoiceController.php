@@ -76,9 +76,8 @@ class InvoiceController extends Controller
      * @param StoreInvoiceRequest $request
      * @return JsonResponse
      */
-    public function store(StoreInvoiceRequest $request): \Illuminate\Http\JsonResponse
+    public function store(StoreInvoiceRequest $request)
     {
-
         $validatorData = $request->validated();
         DB::beginTransaction();
         try {
@@ -108,11 +107,17 @@ class InvoiceController extends Controller
             $payment->setAmount(floatval($validatorData['somme_verser']));
             $payment->settype(1);
             $payment->setUser(User::first()->id);
-            $payment->setReliquat(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id,  $validatorData['reliquat']));
+            $payment->setReliquat(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id,  $validatorData['somme_verser']));
             $payment->setComment($validatorData['comments']);
 
-            InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id , $payment->getPayment());
-            RefactoPaymentService::RESTORE_PAYMENT($payment->getPaymentByInvoice($invoice->getInvoice()->id)->id);
+            InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id , $payment->getNewPay());
+            $invoice->activeInvoice();
+
+            if(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id, 0) == 0){
+                InvoiceServices::SOLDED($invoice->getInvoice()->id);
+            }
+
+
             DB::commit();   
 
         } catch (\Exception $e) {
@@ -128,68 +133,8 @@ class InvoiceController extends Controller
                     'status' => 'failed'
                 ],
                 status: 400
-            );
+            ); 
         }
-
-
-        // try {
-        //     $invoice = new InvoiceService();
-        //     $createInvoiceData = [
-        //         'amount' => $validatorData['valeur_facture'],
-        //         'discount' => $validatorData['valeur_reduction'],
-        //         'commercial_id' => $validatorData['commercial'],
-        //         'is_10Yaar' => $validatorData['is10Yaars'],
-        //         'is_sold' => !(intval($validatorData['reliquat']) > 0),
-        //         'name' => $validatorData['name'],
-        //         "customer_id" => isset($validatorData['client_id']) ? $validatorData['client_id'] : null,
-        //         'price_id' => Price::query()->where('is_deleted', false)->first()->id,
-        //         'caisse_id' => Caisse::query()->where('status', 1)->first()->id
-
-        //     ];
-        //     $invoice->createInvoice($createInvoiceData);
-        //     $item = $validatorData['Paniers'];
-
-        //     foreach ($item as $item) {
-        //         $data = [
-        //             "product_id" => $item["uuid"],
-        //             "designation" => $item['designation'],
-        //             "type" => $item['type'],
-        //             "cbm" => $item['cbm'],
-        //             'groupage' => $item['name'],
-
-        //         ];
-        //         $invoice->addInvoiceItem($data);
-        //     }
-        //     $payementData = [
-        //         "user_id" => User::query()->first()->id,
-        //         "amount" => $validatorData['somme_verser'],
-        //         'cash_in' => floatval($validatorData['somme_verser']) > 0 ? false : true,
-        //         'reliquat' => $validatorData['reliquat'],
-        //         'comment' => $validatorData['comments']
-
-        //     ];
-        //     $payement = new PaymentService(null);
-        //     $payement->makePayment($payementData, $invoice->getInvoice()->id);
-        //     DB::commit();
-        //     return response()->json([
-        //         "status" => 'success',
-        //         'message' => 'Le bon de caisse a ete genere avec success'
-        //     ], 200);
-        // } catch (\Exception $e) {
-        //     DB::rollBack();
-        //     Log::info("***************************************************");
-        //     Log::error($e->getCode());
-        //     Log::error($e->getLine());
-        //     Log::error($e->getMessage());
-        //     Log::info("***************************************************");
-        //     return response()->json(
-        //         [
-        //             'message' => "L'enregistrement a été interrompu. Veuillez vérifier vos informations s'il vous plaît.!",
-        //             'status' => 'failed'
-        //         ],
-        //         status: 400
-        //     );
-        // }
     }
 
     /**
@@ -212,9 +157,19 @@ class InvoiceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invoice $invoice)
+    public function destroy( $invoice)
     {
-        //
+        $invoice = Invoice::query()->where('id', $invoice)->first();
+        $invoice->is_deleted = true;
+        $invoice->save();
+        $pay = Payment::query()->where('invoice_id', $invoice->id)->get();
+        foreach ($pay as $p) {
+            $p->deleted = true;
+            $p->save();
+        }
+        return response()->json([
+            "message" => "L'invoice a été supprimée avec succès"
+        ]);
     }
 
     public function dashboard()

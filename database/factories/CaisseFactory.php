@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,17 +17,22 @@ class CaisseFactory extends Factory
      */
     public function definition(): array
     {
+        $date = Carbon::now();
+        $start_date = $date->copy()->startOfDay();
+        $date->addDays(1)->setHour(7)->setMinute(30)->setSecond(0);
+        $end_date = $date->copy();
+
         return [
-            'start_date' => fake()->dateTime(),
-            'end_date' => fake()->dateTime(),
-            'transaction' => fake()->sentence(),
-            'encaissement' => fake()->sentence(),
-            'creance' => fake()->sentence(),
-            'remboursement' => fake()->sentence(),
-            '_10yaar' => fake()->sentence(),
-            'magazin' => fake()->sentence(),
-            'versement_magasin' => fake()->sentence(),
-            'versement_10yaar' => fake()->sentence(),
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'transaction' => 0,
+            'encaissement' => 0,
+            'creance' => 0,
+            'remboursement' => 0,
+            '_10yaar' => 0,
+            'magazin' => 0,
+            'versement_magasin' => 0,
+            'versement_10yaar' => 0,
             'status' => true,
         ];
     }

@@ -24,6 +24,7 @@ class Payment extends Model
         'comment',
         'type',
         'cash_in_date',
+        'id',
     ];
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo

@@ -6,7 +6,6 @@ use App\Models\Caisse;
 use App\Models\Commercial;
 use App\Models\Price;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TestSeeder extends Seeder

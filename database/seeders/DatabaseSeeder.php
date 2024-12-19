@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Caisse;
 use App\Models\CashSession;
 use App\Models\Price;
 use App\Models\User;
@@ -16,18 +17,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Artisan::call('migrate:fresh');
-        // User::factory(10)->create();
+         Artisan::call('migrate:fresh');
+         User::factory(10)->create();
+         Caisse::factory()->create();
 
         $this->call(CommercialSeeder::class);
         Price::create([
             'balle' => 340000,
             'colis' => 250000,
         ]);
-        CashSession::factory()->create();
-         User::factory()->create([
-             'name' => 'Denis Tapsoba',
-             'email' => 'test@example.com',
-         ]);
+        
     }
 }
