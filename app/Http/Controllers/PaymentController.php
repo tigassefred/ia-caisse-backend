@@ -11,8 +11,11 @@ use App\Models\Caisse;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
-use App\Services\PaymentService;
+use App\Models\User;
+use App\Services\refacto\InvoiceServices;
+use App\Services\refacto\PaymentService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,11 +26,7 @@ class PaymentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-
-
-    }
+    public function index() {}
 
     /**
      * Show the form for creating a new resource.
@@ -40,7 +39,7 @@ class PaymentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePaymentRequest $request)
+    public function store($id, Request $request)
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required',
@@ -55,17 +54,28 @@ class PaymentController extends Controller
                 'status' => "failled"
             ]);
         }
-
+        DB::beginTransaction();
         try {
-            $amount = $request->amount;
-            $invoiceService = new InvoiceService($id);
-            $invoiceService->payDebit($amount, $request->date);
+            $paymentService = new PaymentService(null);
+            $paymentService->setAmount($request->amount);
+            $paymentService->setType(2);
+            $paymentService->setReliquat(InvoiceServices::GET_RELIQUAT($id, $request->amount));
+            $paymentService->setUser(User::query()->first()->id);
+            $PAY_ID = InvoiceServices::ATTACHE_PAIEMENT($id, $paymentService->getNewPay());
+            PaymentService::CASH_IN($PAY_ID, $request->date);
+            if ($request->discount >  0) {
+                InvoiceServices::PLUS_DISCOUNT($id, $request->discount);
+            }
+            DB::commit();
             return response()->json([
-                "status" => "success"
-            ]);
+                "message" => "Remboursement effectué avec succès",
+                'status' => "success"
+            ], 200);
         } catch (\Exception $th) {
+            dd($th->getMessage());
+            DB::rollBack();
             return response()->json([
-                "message" => "Echecs du rembourssement, veuillez recommencer",
+                "message" => $th->getMessage(),
                 'status' => "failled"
             ], 400);
         }
@@ -173,24 +183,24 @@ class PaymentController extends Controller
     }
 
 
-    public function versement($id): \Illuminate\Http\JsonResponse
+    public function versement($id)
     {
-        DB::beginTransaction();
-        try {
-            $pay = new PaymentService($id);
-            $pay->makeVersement();
-            DB::commit();
-        } catch (\Exception $th) {
-            DB::rollBack();
-            return response()->json([
-                'status' => "failed",
-                "message" => "L'encaissement a échoué, veuillez réessayer"
-            ], 501);
-        }
-        return response()->json([
-            "status" => 'success',
-            'message' => "La somme a été générée avec succès"
-        ]);
+        // DB::beginTransaction();
+        // try {
+        //     $pay = new PaymentService($id);
+        //     $pay->makeVersement();
+        //     DB::commit();
+        // } catch (\Exception $th) {
+        //     DB::rollBack();
+        //     return response()->json([
+        //         'status' => "failed",
+        //         "message" => "L'encaissement a échoué, veuillez réessayer"
+        //     ], 501);
+        // }
+        // return response()->json([
+        //     "status" => 'success',
+        //     'message' => "La somme a été générée avec succès"
+        // ]);
     }
 
     public function sendPaymentInvoice($id)
@@ -198,6 +208,4 @@ class PaymentController extends Controller
         $payment = Payment::query()->where('id', $id)->first();
         return new PaymentReceiptResource($payment);
     }
-
-
 }

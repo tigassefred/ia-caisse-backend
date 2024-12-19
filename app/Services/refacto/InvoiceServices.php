@@ -6,7 +6,10 @@ use App\Models\Commercial;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
+use Exception;
 use Illuminate\Support\Facades\Log;
+
+use function PHPUnit\Framework\throwException;
 
 class InvoiceServices
 {
@@ -88,8 +91,9 @@ class InvoiceServices
         Invoice::query()->where('id', $id)->update(['is_sold' => false]);
     }
 
-    public function activeInvoice(){
-        if($this->getInvoice() != null){
+    public function activeInvoice()
+    {
+        if ($this->getInvoice() != null) {
             $tmp =  Invoice::query()->where('id', $this->getInvoice()->id)->first();
             $tmp->is_deleted = false;
             $tmp->save();
@@ -98,21 +102,27 @@ class InvoiceServices
 
     public static function ATTACHE_PAIEMENT($id, $paiement)
     {
-       try {
-        $pay = new Payment();
-        $pay->amount = $paiement['amount'];
-        $pay->user_id = $paiement['user_id'];
-        $pay->type = $paiement['type'];
-        $pay->comment = $paiement['comment'];
-        $pay->deleted = false;
-        $pay->reliquat = $paiement['reliquat'];
-        $pay->invoice_id = $id;
-        $pay->save();
-        return $pay->id;
-       }catch (\Exception $e) {
-           Log::error($e->getMessage());
-           throw new \Exception("Echec de creation de la nouvelle facture");
-       }
+        try {
+            $pay = new Payment();
+            $pay->amount = $paiement['amount'];
+            $pay->user_id = $paiement['user_id'];
+            $pay->type = $paiement['type'];
+            $pay->comment = $paiement['comment'];
+            $pay->deleted = false;
+            $pay->invoice_id = $id;
+
+            if ($paiement['type'] == 2) {
+                $pay->cash_in = true;
+                $pay->cash_in_date = $paiement['cash_in_date'];
+            }
+
+            $pay->reliquat = $paiement['reliquat'];
+            $pay->save();
+            return $pay->id;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw new \Exception("Echec de l'enregistrement du paiement");
+        }
     }
 
     /**
@@ -154,6 +164,38 @@ class InvoiceServices
             return ($remainingAmount > 0) ? $remainingAmount : 0;
         } catch (\Exception $e) {
             dd($e->getMessage());
+        }
+    }
+
+    public static function GET_PAYMENTS($id): float|int
+    {
+        try {
+            $invoice = Invoice::query()->where('id', $id)->first();
+            $totalPayments = 0.0;
+            if (count($invoice->payments) > 0) {
+                foreach ($invoice->payments as $payment) {
+                    if ($payment->deleted == false) {
+                        $totalPayments += (float)$payment->amount;
+                    }
+                }
+            }
+            return $totalPayments;
+        } catch (\Exception $e) {
+            dd($e->getMessage());
+        }
+    }
+
+    public static function PLUS_DISCOUNT($id, $newDiscount)
+    {
+        $invoice = Invoice::query()->where('id', $id)->first();
+        $updatedDiscount = $invoice->discount + $newDiscount;
+
+        $netPay = $invoice->amount + $updatedDiscount;
+        if ($netPay - InvoiceServices::GET_PAYMENTS($id) >= 0) {
+            $invoice->discount = $updatedDiscount;
+            $invoice->save();
+        }else{
+            throw new Exception("Imposible de faire cette reduction");
         }
     }
 }

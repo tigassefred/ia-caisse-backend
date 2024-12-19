@@ -17,6 +17,8 @@ class PaymentService
         'deleted'=>true,
         'reliquat'=>0,
         'comment'=>null,
+        'discount'=>0,
+        "cash_in_date"=> null,
     ];
 
     public ?string $id = null;
@@ -67,7 +69,7 @@ class PaymentService
         if ($date == null) {
            Payment::query()->where('id',$id)->update(['cash_in'=>true , 'cash_in_date'=>Carbon::now()]);
         } else {
-            Payment::query()->where('id',$id)->update(['cash_in'=>true,'cash_in_date'=>$date]);
+            Payment::query()->where('id',$id)->update(['cash_in'=>true,'cash_in_date'=>Carbon::parse($date)]);
         }
     }   
    

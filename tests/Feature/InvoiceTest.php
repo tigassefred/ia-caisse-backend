@@ -34,15 +34,14 @@ class InvoiceTest extends TestCase
         $data['commercial'] = Commercial::query()->first()->id;
         $response = $this->postJson('api/invoices', $data);
         $response->assertStatus(200);
-        
     }
     public function test_it_can_create_an_invoice(): void
     {
         $data = $this->generateInvoice();
         $data['commercial'] = Commercial::query()->first()->id;
-        $data['somme_verser']=10000;
-        $data['valeur_facture']=100000;
-        $data['valeur_reduction']=0;
+        $data['somme_verser'] = 10000;
+        $data['valeur_facture'] = 100000;
+        $data['valeur_reduction'] = 0;
 
         $response = $this->postJson('api/invoices', $data);
         $response->assertStatus(200);
@@ -57,22 +56,22 @@ class InvoiceTest extends TestCase
         $this->assertEquals(0, $invoice->is_sold);
 
         $this->assertEquals(90000, InvoiceServices::GET_RELIQUAT($invoice->id));
-        $this->assertEquals(1 , count($invoice->Payments));
+        $this->assertEquals(1, count($invoice->Payments));
         $this->assertEquals($data['somme_verser'], $invoice->Payments->first()->amount);
         $this->assertEquals($data['comments'], $invoice->Payments->first()->comment);
         $this->assertEquals(1, $invoice->Payments->first()->type);
         $this->assertEquals(90000, $invoice->Payments->first()->reliquat);
         $this->assertEquals(0, $invoice->Payments->first()->cash_in);
         $this->assertEquals(0, $invoice->Payments->first()->deleted);
-
     }
 
-    public function test_it_can_create_an_invoice_white_debit_status(): void {
+    public function test_it_can_create_an_invoice_white_debit_status(): void
+    {
         $data = $this->generateInvoice();
         $data['commercial'] = Commercial::query()->first()->id;
-        $data['somme_verser']=0;
-        $data['valeur_facture']=100000;
-        $data['valeur_reduction']=0;
+        $data['somme_verser'] = 0;
+        $data['valeur_facture'] = 100000;
+        $data['valeur_reduction'] = 0;
 
         $response = $this->postJson('api/invoices', $data);
         $response->assertStatus(200);
@@ -87,12 +86,13 @@ class InvoiceTest extends TestCase
         $this->assertEquals(100000, $invoice->Payments->first()->reliquat);
     }
 
-    public function test_it_can_create_an_invoice_whitout_debit_status(): void {
+    public function test_it_can_create_an_invoice_whitout_debit_status(): void
+    {
         $data = $this->generateInvoice();
         $data['commercial'] = Commercial::query()->first()->id;
-        $data['somme_verser']=100000;
-        $data['valeur_facture']=100000;
-        $data['valeur_reduction']=0;
+        $data['somme_verser'] = 100000;
+        $data['valeur_facture'] = 100000;
+        $data['valeur_reduction'] = 0;
 
         $response = $this->postJson('api/invoices', $data);
         $response->assertStatus(200);
@@ -105,15 +105,15 @@ class InvoiceTest extends TestCase
 
         $this->assertEquals(100000, $invoice->Payments->first()->amount);
         $this->assertEquals(0, $invoice->Payments->first()->reliquat);
-        
     }
 
-    public function test_it_can_create_an_invoice_white_debit_status2(): void {
+    public function test_it_can_create_an_invoice_white_debit_status2(): void
+    {
         $data = $this->generateInvoice();
         $data['commercial'] = Commercial::query()->first()->id;
-        $data['somme_verser']=80000;
-        $data['valeur_facture']=100000;
-        $data['valeur_reduction']=0;
+        $data['somme_verser'] = 80000;
+        $data['valeur_facture'] = 100000;
+        $data['valeur_reduction'] = 0;
 
         $response = $this->postJson('api/invoices', $data);
         $response->assertStatus(200);
@@ -126,7 +126,6 @@ class InvoiceTest extends TestCase
 
         $this->assertEquals(80000, $invoice->Payments->first()->amount);
         $this->assertEquals(20000, $invoice->Payments->first()->reliquat);
-
     }
 
     private function generateInvoice()
