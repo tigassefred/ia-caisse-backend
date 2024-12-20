@@ -42,30 +42,57 @@ class PaymentController extends Controller
     public function store($id, Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => 'required',
-            'amount' => 'required',
+            'id' => 'required|exists:invoices,id',
+            'amount' => 'required|integer|min:1',
             'date' => 'required',
-            'discount' => 'nullable|integer',
+            'discount' => 'nullable|integer|min:0',
         ]);
+
+        if (floatval(InvoiceServices::GET_RELIQUAT($id, 0)) < floatval($request->amount)) {
+            return response()->json([
+                'message' => 'Impossible d\'effectuer cet paiement',
+                'status' => "failled"
+            ], 400);
+        }
+
 
         if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()->first(),
                 'status' => "failled"
-            ]);
+            ], 400);
         }
+
         DB::beginTransaction();
         try {
+
+            if ($request->discount >  0) {
+                InvoiceServices::PLUS_DISCOUNT($id, $request->discount);
+            }
+
             $paymentService = new PaymentService(null);
             $paymentService->setAmount($request->amount);
             $paymentService->setType(2);
             $paymentService->setReliquat(InvoiceServices::GET_RELIQUAT($id, $request->amount));
             $paymentService->setUser(User::query()->first()->id);
-            $PAY_ID = InvoiceServices::ATTACHE_PAIEMENT($id, $paymentService->getNewPay());
-           
-            PaymentService::CASH_IN($PAY_ID, Carbon::parse($request->date)->format('Y-m-d'));
-            if ($request->discount >  0) {
-                InvoiceServices::PLUS_DISCOUNT($id, $request->discount);
+
+            $firstPayment = Payment::query()->where('invoice_id', $id)->where('type', 1)->first();
+            $cashInDate = Carbon::parse($firstPayment->cash_in_date);
+            $PAY_ID = null;
+
+            if ($cashInDate->isSameDay(Carbon::parse($request->date))) {
+                $firstPayment->cash_in = true;
+                $firstPayment->cash_in_date = Carbon::now();
+                $firstPayment->amount = $firstPayment->amount + $request->amount;
+                $firstPayment->reliquat = $paymentService->getNewPay()['reliquat'];
+                $firstPayment->save();
+            } else {
+                $PAY_ID = InvoiceServices::ATTACHE_PAIEMENT($id, $paymentService->getNewPay());
+                PaymentService::CASH_IN($PAY_ID, Carbon::parse($request->date)->format('Y-m-d'));
+            }
+
+            if (InvoiceServices::GET_RELIQUAT($id, 0) <= 0) {
+                InvoiceServices::SOLDED($id);
             }
             DB::commit();
             return response()->json([
@@ -158,23 +185,17 @@ class PaymentController extends Controller
                 return response()->json(['error' => 'Invoice not found'], 404);
             }
 
-            // Compter le nombre de paiements associés à la facture
-            $paymentsCount = $inv->Payments()->count();
-
-            if ($paymentsCount > 1) {
-                // Si plusieurs paiements, marquer seulement le paiement comme supprimé
+            if ($pay->type == 2) {
                 $pay->deleted = 1;
-                $inv->is_sold = 0;
                 $pay->save();
-            } else {
-                // Si un seul paiement, supprimer les items et marquer la facture et le paiement comme supprimés
-                $inv->items()->delete();
+                InvoiceServices::UNSOLDED($pay->invoice_id);
+            }
+            if ($pay->type == 1) {
                 $inv->is_deleted = 1;
                 $inv->save();
-
-                $pay->deleted = 1;
-                $pay->save();
+                Payment::where('invoice_id', $pay->invoice_id)->update(['deleted' => 1]);
             }
+
             DB::commit();
             return response()->json(['messaage' => 'Payment deleted successfully', 'status' => 'success'], 200);
         } catch (Exception $th) {
@@ -186,22 +207,45 @@ class PaymentController extends Controller
 
     public function versement($id)
     {
-        // DB::beginTransaction();
-        // try {
-        //     $pay = new PaymentService($id);
-        //     $pay->makeVersement();
-        //     DB::commit();
-        // } catch (\Exception $th) {
-        //     DB::rollBack();
-        //     return response()->json([
-        //         'status' => "failed",
-        //         "message" => "L'encaissement a échoué, veuillez réessayer"
-        //     ], 501);
-        // }
-        // return response()->json([
-        //     "status" => 'success',
-        //     'message' => "La somme a été générée avec succès"
-        // ]);
+        DB::beginTransaction();
+        try {
+            PaymentService::CASH_IN($id, Carbon::now()->format('Y-m-d'));
+            DB::commit();
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json([
+                'status' => "failed",
+                "message" => "L'encaissement a échoué, veuillez réessayer"
+            ], 501);
+        }
+        return response()->json([
+            "status" => 'success',
+            'message' => "La somme a été versée avec succès"
+        ]);
+    }
+
+    public function debite($id)
+    {
+        DB::beginTransaction();
+        try {
+            $pay = Payment::query()->where('id', $id)->first();
+            $pay->reliquat = InvoiceServices::GET_RELIQUAT($pay->invoice_id, 0) - floatval($pay->amount);
+            $pay->amount = 0;
+            $pay->cash_in = false;
+            $pay->save();
+            Invoice::query()->where('id', $pay->invoice_id)->update(['is_sold' => 0]);
+            DB::commit();
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json([
+                'status' => "failed",
+                "message" => "L'encaissement a échoué, veuillez réessayer"
+            ], 501);
+        }
+        return response()->json([
+            "status" => 'success',
+            'message' => "La somme a été versée avec succès"
+        ]);
     }
 
     public function sendPaymentInvoice($id)

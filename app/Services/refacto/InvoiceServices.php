@@ -103,6 +103,8 @@ class InvoiceServices
     public static function ATTACHE_PAIEMENT($id, $paiement)
     {
         try {
+
+
             $pay = new Payment();
             $pay->amount = $paiement['amount'];
             $pay->user_id = $paiement['user_id'];
@@ -145,6 +147,9 @@ class InvoiceServices
     {
         try {
             $invoice = Invoice::query()->where('id', $id)->first();
+            if($invoice->is_deleted == 1){
+                return 0;
+            }
             $totalAmount = (float)$invoice->amount - (float) $invoice->discount;
             $totalPayments = 0.0;
             if (count($invoice->payments) > 0) {
