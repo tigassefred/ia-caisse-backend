@@ -65,12 +65,8 @@ class PaymentService
         return $this->newPayment;
     }
 
-    public static function CASH_IN($id  , ?string $date = null){
-        if ($date == null) {
-           Payment::query()->where('id',$id)->update(['cash_in'=>true , 'cash_in_date'=>Carbon::now()]);
-        } else {
+    public static function CASH_IN($id  , string $date){
             Payment::query()->where('id',$id)->update(['cash_in'=>true,'cash_in_date'=>Carbon::parse($date)]);
-        }
     }   
    
     public static function UN_CASH_IN($id){

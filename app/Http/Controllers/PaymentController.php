@@ -62,7 +62,8 @@ class PaymentController extends Controller
             $paymentService->setReliquat(InvoiceServices::GET_RELIQUAT($id, $request->amount));
             $paymentService->setUser(User::query()->first()->id);
             $PAY_ID = InvoiceServices::ATTACHE_PAIEMENT($id, $paymentService->getNewPay());
-            PaymentService::CASH_IN($PAY_ID, $request->date);
+           
+            PaymentService::CASH_IN($PAY_ID, Carbon::parse($request->date)->format('Y-m-d'));
             if ($request->discount >  0) {
                 InvoiceServices::PLUS_DISCOUNT($id, $request->discount);
             }

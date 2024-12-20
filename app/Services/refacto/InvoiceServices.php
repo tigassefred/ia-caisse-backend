@@ -111,11 +111,6 @@ class InvoiceServices
             $pay->deleted = false;
             $pay->invoice_id = $id;
 
-            if ($paiement['type'] == 2) {
-                $pay->cash_in = true;
-                $pay->cash_in_date = $paiement['cash_in_date'];
-            }
-
             $pay->reliquat = $paiement['reliquat'];
             $pay->save();
             return $pay->id;
