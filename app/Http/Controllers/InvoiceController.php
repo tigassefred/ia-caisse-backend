@@ -35,17 +35,22 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
-        $date = $request->input('date')
-            ? Carbon::parse($request->input('date'))
-            : now();
+        $date = Carbon::parse($request->input('date', now()))
+            ->setTime(now()->hour, now()->minute, now()->second);
 
-        $endDateTime = $date->copy()->endOfDay();
-        $startDateTime = $date->copy()->startOfDay();
 
-        $caisse = Caisse::whereBetween('start_date', [$startDateTime, $endDateTime])->first();
+        $caisse = Caisse::query()
+            ->where('start_date', '>=', $date)
+            ->where('end_date', '<=', $date)
+            ->toSql();
+
+            Log::info($caisse);
         if (!$caisse) {
             return response()->json([]);
         }
+
+        $startDateTime = $caisse->start_date;
+        $endDateTime = $caisse->end_date;
 
         $invoices = Invoice::query()->where('caisse_id', $caisse->id)->get();
 
@@ -54,15 +59,13 @@ class InvoiceController extends Controller
         $datePaymnent = Payment::query()
             ->where('deleted', 0)
             ->where('type', '2')
-            ->orderBy('created_at', 'desc')
-            ->where(DB::raw('DATE(cash_in_date)'), '=', $startDateTime->format('Y-m-d'))
+            ->whereBetween('cash_in_date', [$startDateTime, $endDateTime])
             ->get();
 
         $payements = $query
             ->whereIn('invoice_id', $invoices->pluck('id'))
             ->where('deleted', 0)
             ->where('type', 1)
-            ->orderBy('created_at', 'desc')
             ->get();
 
         $allPay = $payements->merge($datePaymnent);
@@ -110,16 +113,15 @@ class InvoiceController extends Controller
             $payment->setReliquat(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id,  $validatorData['somme_verser']));
             $payment->setComment($validatorData['comments']);
 
-            InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id , $payment->getNewPay());
+            InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id, $payment->getNewPay());
             $invoice->activeInvoice();
 
-            if(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id, 0) == 0){
+            if (InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id, 0) == 0) {
                 InvoiceServices::SOLDED($invoice->getInvoice()->id);
             }
 
 
-            DB::commit();   
-
+            DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::info("***************************************************");
@@ -133,7 +135,7 @@ class InvoiceController extends Controller
                     'status' => 'failed'
                 ],
                 status: 400
-            ); 
+            );
         }
     }
 
@@ -157,7 +159,7 @@ class InvoiceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy( $invoice)
+    public function destroy($invoice)
     {
         $invoice = Invoice::query()->where('id', $invoice)->first();
         $invoice->is_deleted = true;
