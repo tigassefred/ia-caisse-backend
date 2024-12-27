@@ -10,7 +10,6 @@ use App\Http\Resources\InvoiceResource;
 use App\Http\Resources\InvoiceUnpaidResource;
 use App\Http\Resources\PayementResource;
 use App\Models\Caisse;
-use App\Models\CashTransactionItem;
 use App\Models\Commercial;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -38,13 +37,17 @@ class InvoiceController extends Controller
         $date = Carbon::parse($request->input('date', now()))
             ->setTime(now()->hour, now()->minute, now()->second);
 
+     
+        $plage = $this->getPlage($date);
+        $start_date = $plage[0];
+        $end_date = $plage[1];
 
-        $caisse = Caisse::query()
-            ->where('start_date', '>=', $date)
-            ->where('end_date', '<=', $date)
-            ->toSql();
+        $response = Caisse::query();
+        $response = $response->where('start_date', '>=', $start_date)
+            ->where('end_date', '<=', $end_date);
 
-            Log::info($caisse);
+        $caisse = $response->first();
+
         if (!$caisse) {
             return response()->json([]);
         }
@@ -203,9 +206,22 @@ class InvoiceController extends Controller
         $date = $request->input('date')
             ? Carbon::parse($request->input('date'))
             : now();
+            $date = Carbon::parse($request->input('date', now()))
+            ->setTime(now()->hour, now()->minute, now()->second);
 
-        $endDateTime = $date->copy()->endOfDay();
-        $startDateTime = $date->copy()->startOfDay();
+     
+        $plage = $this->getPlage($date);
+        $start_date = $plage[0];
+        $end_date = $plage[1];
+
+        $response = Caisse::query();
+        $response = $response->where('start_date', '>=', $start_date)
+            ->where('end_date', '<=', $end_date);
+
+        $caisse = $response->first();
+        $startDateTime = $caisse->start_date;
+        $endDateTime = $caisse->end_date;
+        
 
         $caisse = Caisse::whereBetween('start_date', [$startDateTime, $endDateTime])->first();
         if (!$caisse) {
@@ -319,5 +335,24 @@ class InvoiceController extends Controller
             $totalDebit += $this->getInvoiceDebit($id);
         }
         return $totalDebit;
+    }
+
+    private function getPlage($date){
+    
+    $compare_time = Carbon::parse(now())->setTime(7, 30, 0);
+    $start_time = Carbon::parse($date)->setTime(7, 30, 0);
+    
+    if (now()->isBefore($compare_time)) {
+        $start_date = $start_time->copy();
+        $start_date->subDay();
+
+        $end_date = $start_time->copy();
+        $end_date->setMinute(35);
+
+    } else {
+        $start_date = $start_time->copy();
+        $end_date = $start_time->setMinute(35)->copy()->addDay();
+    }
+    return [$start_date, $end_date];
     }
 }
