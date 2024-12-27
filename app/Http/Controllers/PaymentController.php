@@ -47,6 +47,11 @@ class PaymentController extends Controller
             'date' => 'required',
             'discount' => 'nullable|integer|min:0',
         ]);
+        
+        return response()->json([
+            'message' => 'Impossible d\'effectuer cette action',
+            'status' => "failled"
+        ], 400);
 
         if (floatval(InvoiceServices::GET_RELIQUAT($id, 0)) < floatval($request->amount)) {
             return response()->json([
@@ -231,6 +236,7 @@ class PaymentController extends Controller
             $pay = Payment::query()->where('id', $id)->first();
             $pay->reliquat = InvoiceServices::GET_RELIQUAT($pay->invoice_id, 0) - floatval($pay->amount);
             $pay->amount = 0;
+            
             $pay->cash_in = false;
             $pay->save();
             Invoice::query()->where('id', $pay->invoice_id)->update(['is_sold' => 0]);

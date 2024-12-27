@@ -16,6 +16,15 @@ Route::get("/invoices/statistics" , [InvoiceController::class , 'statistics']);
 
 Route::resource('/invoices', InvoiceController::class)->only(['index','store' , 'show']);
 Route::post("/invoice/{id}/payment" , [\App\Http\Controllers\PaymentController::class , 'store']);
+Route::put('/invoice/{id}/payment/versement' , [\App\Http\Controllers\PaymentController::class , 'versement']);
+Route::put('/invoice/{id}/payment/debit' , [\App\Http\Controllers\PaymentController::class , 'debite']);
+
+
+
+
+
+
+
 
 
 Route::get('/verify/users', [\App\Http\Controllers\CustomerController::class , 'index']);

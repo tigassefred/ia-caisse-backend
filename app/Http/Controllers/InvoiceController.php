@@ -37,7 +37,7 @@ class InvoiceController extends Controller
         $date = Carbon::parse($request->input('date', now()))
             ->setTime(now()->hour, now()->minute, now()->second);
 
-     
+
         $plage = $this->getPlage($date);
         $start_date = $plage[0];
         $end_date = $plage[1];
@@ -122,8 +122,6 @@ class InvoiceController extends Controller
             if (InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id, 0) == 0) {
                 InvoiceServices::SOLDED($invoice->getInvoice()->id);
             }
-
-
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -206,10 +204,10 @@ class InvoiceController extends Controller
         $date = $request->input('date')
             ? Carbon::parse($request->input('date'))
             : now();
-            $date = Carbon::parse($request->input('date', now()))
+        $date = Carbon::parse($request->input('date', now()))
             ->setTime(now()->hour, now()->minute, now()->second);
 
-     
+
         $plage = $this->getPlage($date);
         $start_date = $plage[0];
         $end_date = $plage[1];
@@ -221,7 +219,7 @@ class InvoiceController extends Controller
         $caisse = $response->first();
         $startDateTime = $caisse->start_date;
         $endDateTime = $caisse->end_date;
-        
+
 
         $caisse = Caisse::whereBetween('start_date', [$startDateTime, $endDateTime])->first();
         if (!$caisse) {
@@ -337,22 +335,22 @@ class InvoiceController extends Controller
         return $totalDebit;
     }
 
-    private function getPlage($date){
-    
-    $compare_time = Carbon::parse(now())->setTime(7, 30, 0);
-    $start_time = Carbon::parse($date)->setTime(7, 30, 0);
-    
-    if (now()->isBefore($compare_time)) {
-        $start_date = $start_time->copy();
-        $start_date->subDay();
+    private function getPlage($date)
+    {
 
-        $end_date = $start_time->copy();
-        $end_date->setMinute(35);
+        $compare_time = Carbon::parse(now())->setTime(7, 30, 0);
+        $start_time = Carbon::parse($date)->setTime(7, 30, 0);
 
-    } else {
-        $start_date = $start_time->copy();
-        $end_date = $start_time->setMinute(35)->copy()->addDay();
-    }
-    return [$start_date, $end_date];
+        if (now()->isBefore($compare_time)) {
+            $start_date = $start_time->copy();
+            $start_date->subDay();
+
+            $end_date = $start_time->copy();
+            $end_date->setMinute(35);
+        } else {
+            $start_date = $start_time->copy();
+            $end_date = $start_time->setMinute(35)->copy()->addDay();
+        }
+        return [$start_date, $end_date];
     }
 }
