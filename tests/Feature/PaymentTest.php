@@ -52,6 +52,7 @@ class PaymentTest extends TestCase
             'discount' => 0,
             'id' => $inv->first()->id,
         ]);
+       
         $response->assertStatus(200);
         $this->assertEquals(2, Payment::query()->count());
         $this->assertEquals(false, Payment::query()->where('invoice_id', $inv->first()->id)->where('type', 1)->first()->cash_in);
@@ -281,5 +282,35 @@ class PaymentTest extends TestCase
             'id' => $inv->id,
         ]);
         $response->assertStatus(400);
+    }
+    public function test_pay_to_debit(){
+        $gen = new GeneratorClass();
+        $data =  $gen->generateInvoice();
+        $data['commercial'] = Commercial::query()->first()->id;
+        $data['somme_verser'] = 10000;
+        $data['valeur_facture'] = 10000;
+        $data['valeur_reduction'] = 0;
+        $this->postJson('api/invoices', $data);
+        $inv = Invoice::query()->first();
+        $this->assertEquals(1, Invoice::query()->find($inv->first()->id)->is_sold);
+        $payFirst = Payment::query()->where('invoice_id', $inv->first()->id)->first();
+        $this->assertEquals(0, $payFirst->reliquat);
+        $this->assertEquals(10000, $payFirst->amount);
+        $this->assertEquals(0, $payFirst->cash_in);
+        $this->assertEquals(0, $payFirst->deleted);
+
+
+        $response = $this->putJson('api/invoice/' . $payFirst->id . '/payment/debit');
+        $response->assertStatus(200);
+    
+
+        $debitPay = Payment::query()->where('invoice_id', $inv->first()->id)->first();
+        $this->assertEquals(1, $debitPay->cash_in);
+        $this->assertEquals(0, $debitPay->amount);
+        $this->assertEquals(10000, $debitPay->reliquat);
+        $this->assertEquals(0, Invoice::query()->find($inv->first()->id)->is_sold);
+
+
+    
     }
 }

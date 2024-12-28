@@ -17,7 +17,6 @@ class InvoiceUnpaidResource extends JsonResource
     public function toArray(Request $request): array
     {
         $payment = $this->Payments->where('deleted', 0);
-        Log::info($this->invoice_id);
         return [
             'id' => $this->id,
             'invoice_id' => $this->invoice_id,

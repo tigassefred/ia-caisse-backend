@@ -44,13 +44,14 @@ class PaymentDeletionTest extends TestCase
             'id' => $inv->id,
         ]);
 
-        $this->postJson('api/invoice/' . $inv->id . '/payment', [
+
+        $response = $this->postJson('api/invoice/' . $inv->id . '/payment', [
             'amount' => 1000,
             'date' => Carbon::now()->addDays(2),
             'discount' => 0,
             'id' => $inv->id,
         ]);
-
+    
         $this->postJson('api/invoice/' . $inv->id . '/payment', [
             'amount' => 1000,
             'date' => Carbon::now()->addDays(3),

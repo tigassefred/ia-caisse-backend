@@ -220,8 +220,6 @@ class InvoiceController extends Controller
         $startDateTime = $caisse->start_date;
         $endDateTime = $caisse->end_date;
 
-
-        $caisse = Caisse::whereBetween('start_date', [$startDateTime, $endDateTime])->first();
         if (!$caisse) {
             return response()->json([
                 "data" => [

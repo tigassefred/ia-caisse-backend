@@ -48,26 +48,20 @@ class PaymentController extends Controller
             'discount' => 'nullable|integer|min:0',
         ]);
         
-        return response()->json([
-            'message' => 'Impossible d\'effectuer cette action',
-            'status' => "failled"
-        ], 400);
-
         if (floatval(InvoiceServices::GET_RELIQUAT($id, 0)) < floatval($request->amount)) {
             return response()->json([
                 'message' => 'Impossible d\'effectuer cet paiement',
                 'status' => "failled"
             ], 400);
+
         }
-
-
+        
         if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()->first(),
                 'status' => "failled"
             ], 400);
         }
-
         DB::beginTransaction();
         try {
 
@@ -234,23 +228,23 @@ class PaymentController extends Controller
         DB::beginTransaction();
         try {
             $pay = Payment::query()->where('id', $id)->first();
-            $pay->reliquat = InvoiceServices::GET_RELIQUAT($pay->invoice_id, 0) - floatval($pay->amount);
+            $pay->reliquat = InvoiceServices::GET_RELIQUAT($pay->invoice_id, 0) + $pay->amount;
             $pay->amount = 0;
-            
-            $pay->cash_in = false;
+            $pay->cash_in = 1;
             $pay->save();
             Invoice::query()->where('id', $pay->invoice_id)->update(['is_sold' => 0]);
             DB::commit();
+
         } catch (\Exception $th) {
             DB::rollBack();
             return response()->json([
                 'status' => "failed",
-                "message" => "L'encaissement a échoué, veuillez réessayer"
+                "message" => $th->getMessage(),
             ], 501);
         }
         return response()->json([
             "status" => 'success',
-            'message' => "La somme a été versée avec succès"
+            'message' => "La transaction a été transformée en creance avec succès"
         ]);
     }
 
