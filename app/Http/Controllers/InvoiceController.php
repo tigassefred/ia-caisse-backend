@@ -171,7 +171,7 @@ class InvoiceController extends Controller
             $p->save();
         }
         return response()->json([
-            "message" => "L'invoice a été supprimée avec succès"
+            "message" => "Le paiement a été supprimé avec succès"
         ]);
     }
 

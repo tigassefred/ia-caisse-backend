@@ -193,6 +193,8 @@ class PaymentController extends Controller
                 $inv->is_deleted = 1;
                 $inv->save();
                 Payment::where('invoice_id', $pay->invoice_id)->update(['deleted' => 1]);
+                InvoiceItem::where('invoice_id', $pay->invoice_id)->delete();
+
             }
 
             DB::commit();

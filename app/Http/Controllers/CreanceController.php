@@ -37,11 +37,13 @@ class CreanceController extends Controller
         $period_start = $date->copy()->startOfMonth();
         $period_end = $date->copy()->endOfMonth();
 
-        $caisses = Caisse::whereBetween('start_date', [$period_start, $period_end])->get();
+        $caisses = Caisse::query()->get();
 
         $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
             ->where('is_deleted',0)->get();
-        $commerciaux = Commercial::query()->orderBy('name')->get();
+        $commerciaux = Commercial::query()
+        ->where('name','like','%nacou%')
+        ->orderBy('name', )->get();
 
         $response = [];
         foreach ($commerciaux  as $com) {
@@ -142,6 +144,10 @@ class CreanceController extends Controller
         return response()->json([
             'data' => $response
         ]);
+    }
+
+    public function getCommercialInvoices($id){
+        $commercial = Commercial::query()->where('id', $id)->first();
     }
 
 
