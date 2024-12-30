@@ -103,8 +103,6 @@ class InvoiceServices
     public static function ATTACHE_PAIEMENT($id, $paiement)
     {
         try {
-
-
             $pay = new Payment();
             $pay->amount = $paiement['amount'];
             $pay->user_id = $paiement['user_id'];

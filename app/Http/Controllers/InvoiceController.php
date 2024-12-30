@@ -72,7 +72,7 @@ class InvoiceController extends Controller
             ->get();
 
         $allPay = $payements->merge($datePaymnent);
-        $allPay = $allPay->sortByDesc('created_at');
+        $allPay = $allPay->sortByDesc('cash_in_date');
 
         return PayementResource::collection($allPay);
     }
@@ -110,14 +110,19 @@ class InvoiceController extends Controller
             }
 
             $payment = new RefactoPaymentService(null);
-            $payment->setAmount(floatval($validatorData['somme_verser']));
+            $sommer_verser = floatval($validatorData['somme_verser']);
+            $payment->setAmount($sommer_verser);
             $payment->settype(1);
             $payment->setUser(User::first()->id);
             $payment->setReliquat(InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id,  $validatorData['somme_verser']));
             $payment->setComment($validatorData['comments']);
+           
 
-            InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id, $payment->getNewPay());
+            $pay_id =  InvoiceServices::ATTACHE_PAIEMENT($invoice->getInvoice()->id, $payment->getNewPay());
             $invoice->activeInvoice();
+            if ($sommer_verser == 0) {
+               RefactoPaymentService::CASH_IN($pay_id);
+            }
 
             if (InvoiceServices::GET_RELIQUAT($invoice->getInvoice()->id, 0) == 0) {
                 InvoiceServices::SOLDED($invoice->getInvoice()->id);

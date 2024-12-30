@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Integrations\GetUsersRequest\Requests\GetUserRequest;
-use App\Http\Integrations\Stock\StockConnector;
-use App\Http\Requests\StorePaymentRequest;
-use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Caisse;
 use App\Models\Invoice;
@@ -18,7 +14,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
@@ -210,7 +205,7 @@ class PaymentController extends Controller
     {
         DB::beginTransaction();
         try {
-            PaymentService::CASH_IN($id, Carbon::now()->format('Y-m-d'));
+            PaymentService::CASH_IN($id);
             DB::commit();
         } catch (\Exception $th) {
             DB::rollBack();

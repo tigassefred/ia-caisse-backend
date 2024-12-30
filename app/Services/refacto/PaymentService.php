@@ -9,16 +9,16 @@ use Illuminate\Support\Carbon;
 class PaymentService
 {
     public $newPayment = [
-        'amount'=>0,
-        'user_id'=>null,
-        'type'=>1,
-        'comment'=>null,
-        'cash_in'=>false,
-        'deleted'=>true,
-        'reliquat'=>0,
-        'comment'=>null,
-        'discount'=>0,
-        "cash_in_date"=> null,
+        'amount' => 0,
+        'user_id' => null,
+        'type' => 1,
+        'comment' => null,
+        'cash_in' => false,
+        'deleted' => true,
+        'reliquat' => 0,
+        'comment' => null,
+        'discount' => 0,
+        "cash_in_date" => null,
     ];
 
     public ?string $id = null;
@@ -46,40 +46,55 @@ class PaymentService
         $this->newPayment['type'] = $type;
     }
 
-    public function setComment(?string $comment=null)
+    public function setComment(?string $comment = null)
     {
-        $this->newPayment['comment'] = $comment ;
+        $this->newPayment['comment'] = $comment;
+    }
+    public function setCashIn(bool $cashIn =  false)
+    {
+        $this->newPayment['cash_in'] = $cashIn;
     }
 
-    public function getPayment(){
-        return Payment::query()->where('id',$this->id)->first();
+    public function getPayment()
+    {
+        return Payment::query()->where('id', $this->id)->first();
     }
-    public function getPaymentById($id){
-        return Payment::query()->where('id',$id)->first();
+    public function getPaymentById($id)
+    {
+        return Payment::query()->where('id', $id)->first();
     }
-    public function getPaymentsByInvoice($id){
-        return Payment::query()->where('invoice_id',$id)->get();
+    public function getPaymentsByInvoice($id)
+    {
+        return Payment::query()->where('invoice_id', $id)->get();
     }
-    public function getNewPay(){
+    public function getNewPay()
+    {
 
         return $this->newPayment;
     }
 
-    public static function CASH_IN($id  , string $date){
-            Payment::query()->where('id',$id)->update(['cash_in'=>true,'cash_in_date'=>Carbon::parse($date)]);
-    }   
-   
-    public static function UN_CASH_IN($id){
-        Payment::query()->where('id',$id)->update(['cash_in'=>false]);
+    public static function CASH_IN($id)
+    {
+        try {
+
+            Payment::query()->where('id', $id)->update(['cash_in' => true]);
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        }
     }
 
-    public static function DELETE_PAYMENT($id){
-        Payment::query()->where('id',$id)->update(['deleted'=>true]);
+    public static function UN_CASH_IN($id)
+    {
+        Payment::query()->where('id', $id)->update(['cash_in' => false]);
     }
 
-    public static function RESTORE_PAYMENT($id){
-        Payment::query()->where('id',$id)->update(['deleted'=>false]);
+    public static function DELETE_PAYMENT($id)
+    {
+        Payment::query()->where('id', $id)->update(['deleted' => true]);
     }
 
+    public static function RESTORE_PAYMENT($id)
+    {
+        Payment::query()->where('id', $id)->update(['deleted' => false]);
+    }
 }
-
