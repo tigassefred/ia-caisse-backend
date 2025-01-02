@@ -42,7 +42,7 @@ class CreanceController extends Controller
         $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
             ->where('is_deleted',0)->get();
         $commerciaux = Commercial::query()
-        ->where('name','like','%nacou%')
+       // ->where('name','like','%ala%')
         ->orderBy('name', )->get();
 
         $response = [];
@@ -89,6 +89,7 @@ class CreanceController extends Controller
 
     public function creance_mensuelle($period)
     {
+    
         $validator = Validator::make(['period' => $period], [
             'period' => "required"
         ]);
@@ -98,8 +99,12 @@ class CreanceController extends Controller
         }
 
         $date = Carbon::createFromFormat("m-Y", $period);
+        Log::info($date->format('d/m/Y'));
+        Log::info($period);
         $period_start = $date->copy()->startOfMonth();
         $period_end = $date->copy()->endOfMonth();
+    
+
 
         $caisses = Caisse::whereBetween('start_date', [$period_start, $period_end])->get();
 
@@ -137,6 +142,7 @@ class CreanceController extends Controller
                     'somme_encaisse' =>number_format( $pay->where('cash_in', 1)->sum('amount'),0,'.',' '),
                     'somme_creance' => number_format($this->getInvoicesDebit($CommercialInvoices->pluck('id')),0,'.',' '),
                     'reduction' => number_format($CommercialInvoices->sum('discount'),0,'.',' '),
+                    'precedente'=>$this->getInvoicePrecedente($com->id,$period),
                 ];
             }
         }
@@ -165,6 +171,24 @@ class CreanceController extends Controller
             $totalDebit += $this->getInvoiceDebit($id);
         }
         return $totalDebit;
+    }
+
+    private function getInvoicePrecedente($commercial_id , $period){
+
+        $date = Carbon::createFromFormat("m-Y", $period)->subMonth();
+        $period_start = $date->copy()->startOfMonth();
+  
+        $caisses = Caisse::where('start_date','<',$period_start)->get();
+
+        $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
+            ->where('is_deleted',0)
+            ->where('is_sold',0)
+            ->where('commercial_id', $commercial_id)
+            ->get();
+
+
+        return number_format($this->getInvoicesDebit($allInvoices->pluck('id')),0,'.',' ');
+          
     }
 
 
