@@ -19,6 +19,7 @@ class CaisseFactory extends Factory
     {
         $date = Carbon::now();
         $start_date = $date->copy()->startOfDay();
+        $start_date->setHour(7)->setMinute(30)->setSecond(0);
         $date->addDays(1)->setHour(7)->setMinute(30)->setSecond(0);
         $end_date = $date->copy();
 
