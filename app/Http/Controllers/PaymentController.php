@@ -38,7 +38,7 @@ class PaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:invoices,id',
-            'amount' => 'required|integer|min:1',
+            'amount' => 'required|integer|min:0',
             'date' => 'required',
             'discount' => 'nullable|integer|min:0',
         ]);
