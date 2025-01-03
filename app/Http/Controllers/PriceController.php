@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\Price;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class PriceController extends Controller
@@ -14,7 +15,9 @@ class PriceController extends Controller
      */
     public function index()
     {
-        return Price::all();
+        return Price::query()->orderBy('is_deleted', 'asc')
+        ->orderBy('id', 'desc')
+        ->get();
     }
 
     /**
@@ -43,10 +46,30 @@ class PriceController extends Controller
      */
     public function update(Request $request, $price)
     {
-        Price::query()->update(['is_deleted', true]);
-        Price::query()->where('id', $price)
-            ->update(['is_deleted', true]);
+        $validator = Validator::make(['price'=>$price], [
+            'price'=> 'required|exists:prices,id',
+        ]);
+        if($validator->fails()){
+            return response()->json(['status' => 'failled',
+              "message" => $validator->errors()->first()
+        ]);
+        }
 
+        DB::beginTransaction();
+        try{
+        Price::query()->update(['is_deleted'=> 1]);
+        $query  = Price::query()->where('id', $price)->first();
+        $query->is_deleted = 0;
+        $query->save();
+    
+        }catch(\Exception $e){
+            DB::rollback();
+            return response()->json(['status' => 'failled',
+              "message" => $e->getMessage()
+            ]);
+
+        }
+        DB::commit();
         return response()->json([
             'status' => 'success'
         ]);

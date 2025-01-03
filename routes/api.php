@@ -3,6 +3,7 @@
 use App\Http\Controllers\CaisseController;
 use App\Http\Controllers\CashTransactionController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PriceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,8 @@ Route::resource('/invoices', InvoiceController::class)->only(['index','store' , 
 Route::post("/invoice/{id}/payment" , [\App\Http\Controllers\PaymentController::class , 'store']);
 Route::put('/invoice/{id}/payment/versement' , [\App\Http\Controllers\PaymentController::class , 'versement']);
 Route::put('/invoice/{id}/payment/debit' , [\App\Http\Controllers\PaymentController::class , 'debite']);
+
+Route::resource('/price' , PriceController::class);
 
 
 
