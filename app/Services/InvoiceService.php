@@ -62,6 +62,8 @@ class InvoiceService
             ->where('type',1)->first();
 
         $cashDate = Carbon::parse($PayFirst->cash_in_date);
+        Log::info($cashDate);
+        return;
 
         if($cashDate->isToday()){
            $newTotal = $PayFirst->amount + $newAmount;

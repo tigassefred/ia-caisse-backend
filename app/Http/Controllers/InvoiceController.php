@@ -265,8 +265,8 @@ class InvoiceController extends Controller
 
         return response()->json([
             "data" => [
-                'sommes_previsionelle' => $invoices->sum("amount") + $rembourssement->sum("amount"),
-                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount') + $rembourssement->sum('amount'),
+                'sommes_previsionelle' => $invoices->sum("amount"),// + $rembourssement->sum("amount"),
+                "somme_encaisse" => $payement->where('cash_in', 1)->sum('amount'),// + $rembourssement->sum('amount'),
                 "rembourssement" => $rembourssement->sum('amount'),
                 "somme_en_attente" => $payement->where("cash_in", 0)->sum('amount'),
                 "reliquat" => $this->getInvoicesDebit($invoices->pluck('id')),

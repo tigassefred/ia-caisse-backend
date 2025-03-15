@@ -49,7 +49,8 @@ Route::resource('price' , \App\Http\Controllers\PriceController::class)->only(['
 
 
 Route::get('/creance/{period}/general', [\App\Http\Controllers\CreanceController::class , 'creance_mensuelle']);
-Route::get('/creance/commercial/{period}/general', [\App\Http\Controllers\CreanceController::class , 'creance_mensuelle_commercial']);
 Route::get('/creance/commercial/{id}', [\App\Http\Controllers\CreanceController::class , 'creance-mensuelle']);
 
 
+
+Route::get('/creance/commercial/{period}/general', [\App\Http\Controllers\CreanceController::class , 'creance_mensuelle_commercial']);

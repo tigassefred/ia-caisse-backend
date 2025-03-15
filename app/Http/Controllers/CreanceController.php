@@ -42,7 +42,8 @@ class CreanceController extends Controller
         $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
             ->where('is_deleted',0)->get();
         $commerciaux = Commercial::query()
-       // ->where('name','like','%ala%')
+        ->where('is_deleted',0)
+      //  ->where('name','like','%soul%')
         ->orderBy('name', )->get();
 
         $response = [];
@@ -76,7 +77,7 @@ class CreanceController extends Controller
                 'somme_encaisse' => number_format($allPay->sum('amount'),0,',',' '),
                 'reduction' => number_format($CommercialInvoices->sum('discount'),0,',',' '),
                 'start_date' => $period_start->format('d/m/Y'),
-                'end_date' => $period_end->format('d/m/Y'),
+                'end_date' => now()->format('d/m/Y'),
                 "items" => $items,
 
             ];
@@ -106,7 +107,7 @@ class CreanceController extends Controller
     
 
 
-        $caisses = Caisse::whereBetween('start_date', [$period_start, $period_end])->get();
+        $caisses = Caisse::query()->get();
 
         $allInvoices = Invoice::query()->whereIn('caisse_id', $caisses->pluck('id'))
             ->where('is_deleted',0)->get();
@@ -124,12 +125,14 @@ class CreanceController extends Controller
                 "somme_magazin" => number_format($allPayment->where('cash_in', 1)->whereIn('invoice_id', $allInvoices->where("is_10Yaar",0 )->pluck('id'))->sum('amount'), 0, '', ' '),
                 "reduction" => number_format($allInvoices->sum('discount'), 0, '', ' '),
                 'start_date' => $period_start->format('d/m/Y'),
-                'end_date' => $period_end->format('d/m/Y'),
+                'end_date' => now()->format('d/m/Y'),
             ],
             "details" => []
         ];
 
-        $commerciaux = Commercial::query()->orderBy('name')->get();
+        $commerciaux = Commercial::query()
+            ->where('is_deleted', 0) 
+                ->orderBy('name')->get();
 
         foreach ($commerciaux  as $com) {
             $CommercialInvoices = $allInvoices->where('commercial_id', $com->id);
@@ -142,10 +145,11 @@ class CreanceController extends Controller
                     'somme_encaisse' =>number_format( $pay->where('cash_in', 1)->sum('amount'),0,'.',' '),
                     'somme_creance' => number_format($this->getInvoicesDebit($CommercialInvoices->pluck('id')),0,'.',' '),
                     'reduction' => number_format($CommercialInvoices->sum('discount'),0,'.',' '),
-                    'precedente'=>$this->getInvoicePrecedente($com->id,$period),
+                   // 'precedente'=>$this->getInvoicePrecedente($com->id,$period),
                 ];
             }
         }
+
 
         return response()->json([
             'data' => $response

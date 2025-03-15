@@ -13,7 +13,9 @@ use App\Services\refacto\PaymentService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon as SupportCarbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
@@ -69,10 +71,12 @@ class PaymentController extends Controller
             $paymentService->setType(2);
             $paymentService->setReliquat(InvoiceServices::GET_RELIQUAT($id, $request->amount));
             $paymentService->setUser(User::query()->first()->id);
+            $paymentService->setCashInDate(Carbon::parse($request->date)->format('Y-m-d'));
 
             $firstPayment = Payment::query()->where('invoice_id', $id)->where('type', 1)->first();
             $cashInDate = Carbon::parse($firstPayment->cash_in_date);
             $PAY_ID = null;
+
 
             if ($cashInDate->isSameDay(Carbon::parse($request->date))) {
                 $firstPayment->cash_in = true;

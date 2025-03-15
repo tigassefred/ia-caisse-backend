@@ -4,6 +4,7 @@ namespace App\Services\refacto;
 
 use App\Models\Invoice;
 use App\Models\Payment;
+
 use Illuminate\Support\Carbon;
 
 class PaymentService
@@ -53,6 +54,11 @@ class PaymentService
     public function setCashIn(bool $cashIn =  false)
     {
         $this->newPayment['cash_in'] = $cashIn;
+    }
+
+    public function setCashInDate(string $date)
+    {
+        $this->newPayment['cash_in_date'] = Carbon::parse($date)->setTime(now()->hour, now()->minute, now()->second)->toDateTimeString();
     }
 
     public function getPayment()
