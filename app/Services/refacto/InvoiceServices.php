@@ -110,7 +110,7 @@ class InvoiceServices
             $pay->comment = $paiement['comment'];
             $pay->deleted = false;
             $pay->invoice_id = $id;
-            $pay->cash_in_date = $paiement['cash_in_date'] ?? now()->format('Y-m-d');
+            $pay->cash_in_date = $paiement['cash_in_date'] ?? now();
 
             $pay->reliquat = $paiement['reliquat'];
             $pay->save();
